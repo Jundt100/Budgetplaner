@@ -3,125 +3,224 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#4E9A3A">
+<meta name="theme-color" content="#17795a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Budget">
 <title>Haushaltsbudget</title>
 <style>
 :root{
-  --bg:#f3f6f1; --card:#fff; --text:#1c2819; --muted:#68775f; --line:#e1e8dc; --brand:#4E9A3A; --brand-d:#3d7c2d;
-  --nic:#2E75B6; --van:#C55A11; --ein:#fff3cf; --mon:#e6f4df; --ste:#fde9dc; --spa:#cfeec1; --red:#c0392b; --shadow:0 1px 2px rgba(20,40,10,.06),0 4px 14px rgba(20,40,10,.05);
+  --bg:#edf0f3; --panel:#ffffff; --ink:#15202b; --muted:#667585; --line:#dde3e9; --soft:#f5f7f9;
+  --accent:#17795a; --accent-d:#0f5c44; --accent-bg:#e4f3ec;
+  --nic:#2563c9; --nic-bg:#e8effc; --van:#d4601a; --van-bg:#fcece1;
+  --ein:#f6e7b4; --steu:#fbe4d3; --red:#c0392b; --blue-chip:#dbe7fb;
 }
 @media (prefers-color-scheme:dark){
-  :root{--bg:#10150f;--card:#192018;--text:#e7efe3;--muted:#98a893;--line:#2a3427;--brand:#62b24d;--brand-d:#4E9A3A;--nic:#5aa2e0;--van:#e8864a;--ein:#3a3317;--mon:#1f3319;--ste:#3a2a1c;--spa:#24451c;--shadow:none}
+  :root{--bg:#0f151b;--panel:#18212a;--ink:#e8eef3;--muted:#92a2b1;--line:#27333f;--soft:#1d2833;--accent:#3fbf93;--accent-d:#2ea77d;--accent-bg:#17382d;--nic:#6aa0f0;--nic-bg:#1c2b47;--van:#f19a62;--van-bg:#43291a;--ein:#4a4018;--steu:#46301f;--blue-chip:#1d3050}
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.45 "Avenir Next","Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
-#app{max-width:1000px;margin:0 auto;padding:0 14px calc(86px + env(safe-area-inset-bottom))}
-header.top{display:flex;align-items:center;gap:10px;padding:max(12px,env(safe-area-inset-top)) 0 8px}
-header.top h1{font-size:19px;margin:0;flex:1;letter-spacing:-.01em}
-.pill{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--card);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
-.pill.ok{color:var(--brand)}
-nav.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:20}
-nav.tabs button{flex:1;border:0;background:none;padding:6px 2px;border-radius:10px;color:var(--muted);font-size:11px;display:flex;flex-direction:column;align-items:center;gap:2px}
-nav.tabs button .i{font-size:19px;line-height:1}
-nav.tabs button.on{color:var(--brand);font-weight:600}
-@media (min-width:820px){
-  #app{padding-bottom:40px}
-  nav.tabs{position:static;border:0;background:none;padding:0;margin:0 0 6px;gap:4px}
-  nav.tabs button{flex:none;flex-direction:row;gap:7px;padding:8px 14px;font-size:14px;border-radius:99px}
-  nav.tabs button.on{background:var(--card);box-shadow:var(--shadow)}
-}
-.bar{display:flex;align-items:center;gap:8px;margin:6px 0 12px;flex-wrap:wrap}
-.bar .grow{flex:1}
-.mnav{display:flex;align-items:center;background:var(--card);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
-.mnav button{border:0;background:none;padding:10px 14px;font-size:18px;color:var(--brand)}
-.mnav .lab{position:relative;min-width:150px;text-align:center;font-weight:650;font-size:16px}
+.num,.kv2,td,.amt{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+/* Shell */
+.shell{display:grid;grid-template-columns:224px minmax(0,1fr);min-height:100vh}
+aside.side{position:sticky;top:0;height:100vh;background:var(--panel);border-right:1px solid var(--line);padding:20px 12px 14px;display:flex;flex-direction:column;gap:2px}
+.logo{display:flex;align-items:center;gap:10px;padding:0 10px 18px;font-weight:700;font-size:16px;letter-spacing:-.01em}
+.logo i{width:28px;height:28px;border-radius:8px;background:linear-gradient(90deg,var(--nic) 50%,var(--van) 50%);display:inline-block}
+aside.side button.nv{display:flex;align-items:center;gap:11px;padding:10px 12px;border:0;border-radius:9px;background:none;width:100%;text-align:left;color:var(--muted);font-weight:550}
+aside.side button.nv .i{width:20px;text-align:center;font-size:17px}
+aside.side button.nv:hover{background:var(--soft);color:var(--ink)}
+aside.side button.nv.on{background:var(--accent-bg);color:var(--accent-d);font-weight:650}
+.side .foot{margin-top:auto;padding:12px 10px 0;border-top:1px solid var(--line);font-size:12px;color:var(--muted);word-break:break-all}
+.side .foot b{color:var(--ink);display:block;font-weight:600}
+main.main{padding:22px 28px 70px;min-width:0;max-width:1320px;width:100%}
+.topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.topbar h1{font-size:24px;margin:0 auto 0 0;letter-spacing:-.02em}
+.mnav{display:flex;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.mnav button{border:0;background:none;padding:8px 13px;font-size:18px;color:var(--accent)}
+.mnav button:hover{background:var(--soft)}
+.mnav .lab{position:relative;min-width:150px;text-align:center;font-weight:650;padding:0 6px}
 .mnav .lab input{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}
-.seg{display:inline-flex;background:var(--card);border-radius:12px;padding:3px;box-shadow:var(--shadow)}
-.seg button{border:0;background:none;padding:7px 12px;border-radius:9px;font-size:13px;color:var(--muted)}
-.seg button.on{background:var(--brand);color:#fff;font-weight:600}
-.seg button.on.nj{background:var(--nic)} .seg button.on.vs{background:var(--van)}
-.card{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:14px;margin-bottom:12px}
-.card h2{font-size:13px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:650}
-.grid{display:grid;gap:12px}
-@media (min-width:820px){.grid.two{grid-template-columns:1fr 1fr;align-items:start}}
-.kv{display:flex;justify-content:space-between;align-items:center;padding:11px 12px;border-radius:11px;margin-bottom:6px;gap:10px}
-.kv .l{font-weight:550}
-.kv .v{font-variant-numeric:tabular-nums;font-weight:650;white-space:nowrap}
-.kv.ein{background:var(--ein)} .kv.mon,.kv.einm{background:var(--mon)} .kv.steuer{background:var(--ste)} .kv.spar{background:var(--spa);font-size:17px}
-.kv small{display:block;color:var(--muted);font-weight:400;font-size:12px}
+.seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{border:0;background:none;padding:6px 13px;border-radius:7px;color:var(--muted);font-weight:550}
+.seg button.on{background:var(--ink);color:var(--panel)}
+.seg button.on.nj{background:var(--nic);color:#fff}.seg button.on.vs{background:var(--van);color:#fff}
+.pill{font-size:12px;padding:4px 10px;border-radius:99px;border:1px solid var(--line);color:var(--muted);background:var(--panel)}
+.pill.ok{color:var(--accent-d);border-color:var(--accent)}
+.frozen{display:inline-block;font-size:11px;background:var(--blue-chip);color:var(--nic);border-radius:99px;padding:1px 9px;margin-left:8px;font-weight:600}
+
+/* Panels */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px}
+.panel>h2,.panel .ph h2{font-size:15px;margin:0 0 12px;font-weight:700;letter-spacing:-.005em}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.ph h2{margin:0!important}
+.hint{font-size:12.5px;color:var(--muted);margin:2px 0 8px}
+.dgrid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:14px;align-items:start}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+.two>*{min-width:0}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 15px;border-top:3px solid var(--line)}
+.kpi.ein{border-top-color:#e0b72f}.kpi.mon,.kpi.einm{border-top-color:#79b35b}.kpi.steuer{border-top-color:#ed7d31}.kpi.spar{border-top-color:var(--accent);background:var(--accent-bg)}
+.kpi .kl{font-size:12.5px;color:var(--muted);font-weight:550}
+.kpi .kv2{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:3px 0 2px;white-space:nowrap}
+.kpi.spar .kv2{font-size:26px}
+.kpi .ks{font-size:12px;color:var(--muted);white-space:nowrap}
+.kpi .ks .n{color:var(--nic);font-weight:600}.kpi .ks .v{color:var(--van);font-weight:600}
 .neg{color:var(--red)}
-.quote{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;padding:2px 4px}
-.sub3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px}
-.sub3 div{text-align:center;background:var(--bg);border-radius:10px;padding:8px 4px;font-size:12px;color:var(--muted)}
-.sub3 b{display:block;font-size:14px;color:var(--text)}
-.sub3 .n b{color:var(--nic)} .sub3 .v b{color:var(--van)}
-.bars .row{display:grid;grid-template-columns:130px 1fr 86px;gap:8px;align-items:center;padding:4px 0;font-size:14px}
-.bars .track{height:10px;background:var(--bg);border-radius:6px;overflow:hidden;display:flex}
+
+/* Ledger: Nicola | Vanessa */
+table.ledger{width:100%;border-collapse:collapse}
+table.ledger th{font-size:13px;padding:8px 10px;text-align:right;font-weight:700}
+table.ledger th:first-child{text-align:left}
+table.ledger th.n{color:var(--nic);background:var(--nic-bg);border-radius:8px 8px 0 0}
+table.ledger th.v{color:var(--van);background:var(--van-bg);border-radius:8px 8px 0 0}
+table.ledger td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--line)}
+table.ledger td:first-child{text-align:left;font-weight:550}
+table.ledger td.n{background:color-mix(in srgb,var(--nic-bg) 55%,transparent)}
+table.ledger td.v{background:color-mix(in srgb,var(--van-bg) 55%,transparent)}
+table.ledger td.h{font-weight:650}
+table.ledger tr.spar td{font-weight:700;border-bottom:0;font-size:15px}
+table.ledger tr.spar td:first-child{color:var(--accent-d)}
+table.ledger small{display:block;color:var(--muted);font-weight:400;font-size:11.5px}
+
+/* Category bars */
+.bars .row{display:grid;grid-template-columns:140px 1fr 84px;gap:10px;align-items:center;padding:5px 0}
+.bars .track{height:9px;background:var(--soft);border-radius:5px;overflow:hidden;display:flex}
 .bars .track i{display:block;height:100%}
-.bars .amt{text-align:right;font-variant-numeric:tabular-nums}
+.bars .amt{text-align:right}
 .legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:8px;flex-wrap:wrap}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
-.list .grp{margin:14px 2px 6px;display:flex;justify-content:space-between;font-weight:650;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-.item{display:flex;align-items:center;gap:10px;background:var(--card);padding:11px 12px;border-radius:12px;margin-bottom:6px;box-shadow:var(--shadow);cursor:pointer;border-left:4px solid var(--line)}
-.item.a-Monatlich{border-left-color:var(--brand)} .item.a-Einmalig{border-left-color:var(--nic)} .item.a-Jährlich{border-left-color:#ED7D31} .item.a-Lohn{border-left-color:#FFC000}
-.item.off{opacity:.5}
-.item .m{flex:1;min-width:0}
-.item .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.item .s{font-size:12px;color:var(--muted)}
-.item .a{text-align:right;font-variant-numeric:tabular-nums;font-weight:650;white-space:nowrap}
-.item .a small{display:block;font-weight:400;color:var(--muted);font-size:11px}
-.who{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:99px;color:#fff;margin-right:4px}
-.who.NJ{background:var(--nic)} .who.VS{background:var(--van)} .who.b{background:var(--muted)}
-.fab{position:fixed;right:18px;bottom:calc(78px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:50%;border:0;background:var(--brand);color:#fff;font-size:30px;box-shadow:0 6px 18px rgba(0,0,0,.25);z-index:15}
-@media (min-width:820px){.fab{bottom:28px}}
-.btn{border:0;background:var(--brand);color:#fff;padding:10px 16px;border-radius:11px;font-weight:600}
-.btn.sec{background:var(--card);color:var(--text);border:1px solid var(--line)}
+
+/* Payment lists */
+.pl-head{display:flex;justify-content:space-between;font-weight:700;padding:6px 0 8px;border-bottom:2px solid var(--line);margin-bottom:4px}
+.pl-head.n{color:var(--nic);border-color:var(--nic)}.pl-head.v{color:var(--van);border-color:var(--van)}
+.pl-cat{font-size:12.5px;color:var(--muted);font-weight:650;padding:10px 0 3px;display:flex;justify-content:space-between}
+.pl{display:flex;justify-content:space-between;gap:10px;padding:5px 6px;border-radius:7px;cursor:pointer}
+.pl:hover{background:var(--soft)}
+.pl .num{white-space:nowrap}
+.pl .t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl .t small{color:var(--muted);margin-left:6px;font-size:11.5px}
+.pl.nolink{cursor:default}
+
+/* Hints */
+.hl{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
+.hl:last-child{border:0}
+.hl .ic{font-size:17px;line-height:1.3}
+
+/* Buttons & forms */
+.btn{border:0;background:var(--accent);color:#fff;padding:9px 15px;border-radius:9px;font-weight:600}
+.btn:hover{background:var(--accent-d)}
+.btn.sec{background:var(--panel);color:var(--ink);border:1px solid var(--line)}
+.btn.sec:hover{background:var(--soft)}
 .btn.danger{background:var(--red)}
-.btn.sm{padding:6px 11px;font-size:13px}
-.btn[disabled]{opacity:.5}
-table.t{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
-table.t th,table.t td{padding:7px 4px;text-align:right;border-bottom:1px solid var(--line)}
+.btn.sm{padding:5px 10px;font-size:13px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.actions .grow{flex:1}
+.ib{border:0;background:none;padding:5px 7px;border-radius:7px;color:var(--muted);font-size:15px}
+.ib:hover{background:var(--soft);color:var(--ink)}
+input,select{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 9px;min-width:0;width:100%}
+input:hover,select:hover{border-color:var(--muted)}
+input[type=checkbox]{width:auto}
+.err{color:var(--red);font-size:13px;margin:4px 0}
+
+/* Entries table */
+.fbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.fbar input[type=search]{max-width:240px}
+.fbar select{width:auto}
+.egroup{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden}
+.eg-h{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--soft);border-bottom:1px solid var(--line);font-weight:700}
+.eg-h .sum{font-weight:600;color:var(--muted);margin-right:10px}
+.erow,.ehead{display:grid;grid-template-columns:minmax(150px,2.3fr) 1.05fr 1.05fr .95fr 1.1fr 1.1fr .85fr .85fr 74px;gap:8px;align-items:center;padding:5px 14px}
+.ehead{font-size:12px;color:var(--muted);font-weight:650;padding-top:8px;padding-bottom:2px}
+.ehead .r,.erow .num{text-align:right}
+.erow{border-bottom:1px solid var(--line)}
+.erow:last-of-type{border-bottom:0}
+.erow input,.erow select{border-color:transparent;background:transparent;padding:6px 7px}
+.erow input:hover,.erow select:hover{border-color:var(--line)}
+.erow input:focus,.erow select:focus{background:var(--panel);border-color:var(--accent)}
+.erow.past,.erow.future{opacity:.55}
+.erow .lb{display:none}
+.erow .dim{color:var(--muted)}
+.erow .act{display:flex;justify-content:flex-end}
+.erow .art select{font-weight:600}
+.erow[data-art=Monatlich] .art select{color:var(--accent-d)}
+.erow[data-art=Einmalig] .art select{color:var(--nic)}
+.erow[data-art=Jährlich] .art select{color:#c2631d}
+.erow[data-art=Lohn] .art select{color:#9a7a05}
+.eg-add{padding:8px 14px}
+.who-NJ select{color:var(--nic);font-weight:600}.who-VS select{color:var(--van);font-weight:600}
+
+/* Löhne / Tables */
+table.t{width:100%;border-collapse:collapse;font-size:13.5px}
+table.t th,table.t td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--line)}
 table.t th:first-child,table.t td:first-child{text-align:left}
-table.t th{font-size:11px;color:var(--muted);font-weight:650;text-transform:uppercase;letter-spacing:.04em}
+table.t th{font-size:12px;color:var(--muted);font-weight:650}
 table.t tr.cur td{background:var(--ein);font-weight:650}
 table.t tr.tot td{font-weight:700;border-top:2px solid var(--line)}
 table.t tr.fut td{color:var(--muted)}
 .scroll{overflow-x:auto}
+.lohn-row{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px;align-items:center;padding:5px 8px;border-bottom:1px solid var(--line)}
+.lohn-row.cur{background:var(--ein);border-radius:8px}
+.lohn-row input{text-align:right}
+.lohn-row input::placeholder{color:var(--muted);opacity:.75}
+.lohn-head{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px;font-size:12px;color:var(--muted);padding:0 8px 6px;font-weight:650}
+.lohn-head span:nth-child(n+2){text-align:right;padding-right:10px}
 svg.chart{width:100%;height:auto;display:block}
-svg.chart text{fill:var(--muted);font-size:10px}
+svg.chart text{fill:var(--muted);font-size:14px}
 svg.chart line{stroke:var(--line)}
-.lohn-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
-.lohn-row.cur{background:var(--ein);margin:0 -14px;padding:6px 14px}
-.lohn-row input{width:100%;padding:8px;border:1px solid var(--line);border-radius:9px;background:var(--bg);text-align:right;font-variant-numeric:tabular-nums}
-.lohn-row input::placeholder{color:var(--muted);opacity:.7}
-.lohn-row .mo{font-weight:600;font-size:14px}
-.lohn-head{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:.05em;padding-bottom:6px}
-.lohn-head span:nth-child(n+2){text-align:right;padding-right:8px}
-#modal{position:fixed;inset:0;display:none;background:rgba(0,0,0,.45);z-index:50;align-items:flex-end;justify-content:center}
+
+/* Modal */
+#modal{position:fixed;inset:0;display:none;background:rgba(10,16,22,.5);z-index:50;align-items:center;justify-content:center;padding:14px}
 #modal.on{display:flex}
-.sheet{background:var(--card);width:100%;max-width:520px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom))}
-@media (min-width:600px){#modal{align-items:center}.sheet{border-radius:20px}}
+.sheet{background:var(--panel);width:100%;max-width:520px;max-height:92vh;overflow:auto;border-radius:16px;padding:20px}
+.sheet.wide{max-width:860px}
 .sheet h3{margin:0 0 12px;font-size:18px}
-label.f{display:block;margin-bottom:11px;font-size:12px;font-weight:650;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-label.f input,label.f select{display:block;width:100%;margin-top:4px;padding:10px 11px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-size:16px;text-transform:none;letter-spacing:0;font-weight:400;color:var(--text)}
+label.f{display:block;margin-bottom:11px;font-size:12.5px;font-weight:650;color:var(--muted)}
+label.f input,label.f select{display:block;margin-top:4px;font-size:15px;color:var(--ink);font-weight:400}
 .two-c{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.actions .grow{flex:1}
-.err{color:var(--red);font-size:13px;margin:4px 0}
-.hint{font-size:12px;color:var(--muted);margin:2px 0 8px}
-#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom));background:#222;color:#fff;padding:9px 16px;border-radius:99px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:99}
-#toast.on{opacity:.95}
-.center{min-height:80vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:14px;padding:20px}
-.center .card{max-width:520px;width:100%;text-align:left}
-textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:10px;font:12px/1.4 ui-monospace,Menlo,monospace}
-details summary{cursor:pointer;font-weight:600;padding:6px 0}
+.frow{display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 34px;gap:6px;margin-bottom:6px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:28px;background:#1b2630;color:#fff;padding:9px 16px;border-radius:99px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:99}
+#toast.on{opacity:.96}
+.center{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:14px;padding:20px}
+.center .panel{max-width:520px;width:100%;text-align:left}
+textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:10px;background:var(--soft);padding:10px;font:12px/1.4 ui-monospace,Menlo,monospace}
 .empty{text-align:center;color:var(--muted);padding:26px 10px}
-code{background:var(--bg);padding:1px 5px;border-radius:5px;font-size:12px}
-.frozen{display:inline-block;font-size:11px;background:#dbeafe;color:#1d4ed8;border-radius:99px;padding:1px 8px;margin-left:6px}
+code{background:var(--soft);padding:1px 5px;border-radius:5px;font-size:12px}
+details summary{cursor:pointer;font-weight:600;padding:6px 0}
+.kvrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.kvrow:last-child{border:0}
+
+/* Mobil */
+@media (max-width:899px){
+  .shell{display:block}
+  aside.side{position:fixed;top:auto;bottom:0;left:0;right:0;height:auto;flex-direction:row;padding:5px 6px calc(5px + env(safe-area-inset-bottom));border-right:0;border-top:1px solid var(--line);z-index:30;gap:0}
+  .logo,.side .foot{display:none}
+  aside.side button.nv{flex-direction:column;gap:1px;padding:5px 2px;font-size:11px;justify-content:center;align-items:center;text-align:center}
+  main.main{padding:14px 12px 96px}
+  .topbar h1{font-size:20px;width:100%}
+  .kpis{grid-template-columns:1fr 1fr}.kpi.spar{grid-column:1/-1}
+  .dgrid,.two{grid-template-columns:1fr}
+  .bars .row{grid-template-columns:105px 1fr 70px}
+  .ehead{display:none}
+  .erow{grid-template-columns:1fr 1fr;padding:10px 12px;row-gap:4px;border-bottom:1px solid var(--line)}
+  .erow .c.name{grid-column:1/-1}
+  .erow .lb{display:block;font-size:11px;color:var(--muted);font-weight:600;padding-left:7px}
+  .erow input,.erow select{border-color:var(--line)}
+  .erow .c.an,.erow .c.av{text-align:left}
+  .erow .c.act{grid-column:1/-1;justify-content:flex-end}
+  .frow{grid-template-columns:1fr 1fr}
+  .mnav .lab{min-width:130px}
+  #toast{bottom:90px}
+}
+
+.mrow{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+.mrow:last-child{border-bottom:0}
+.mrow .m{flex:1;min-width:0}.mrow .t{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mrow .s{font-size:12px;color:var(--muted)}
+.mrow .a{text-align:right;font-weight:650;white-space:nowrap}.mrow .a small{display:block;font-weight:400;color:var(--muted);font-size:11px}
+.mrow.off{opacity:.55}
 </style>
 </head>
 <body>
@@ -301,7 +400,7 @@ async function autoFreeze(){
   const f=firstKey(); if(f==null) return;
   const cur=nowKey(); const ops=[];
   for(let k=f;k<cur;k++){
-    if(S.frozen[k]) continue;
+    if(S.frozen[k] || (S.settings.unlocked||[]).includes(k)) continue;
     const l=lohnBase(k);
     ops.push({col:'frozen', id:String(k), obj:{key:k, items:liveItems(k), lohnN:l.n, lohnV:l.v, at:Date.now()}});
   }
@@ -311,14 +410,6 @@ async function autoFreeze(){
   }
 }
 
-/* ============ UI-Zustand ============ */
-const ui = {
-  tab:'month', key:nowKey(), scope:lsGet('budget_scope','all'), year:new Date().getFullYear(),
-  yview:'year', filterKat:'', onlyActive:true, user:null, phase:'boot', err:''
-};
-const scopeLabel = {all:'Haushalt', NJ:'Nicola', VS:'Vanessa'};
-const pick = (c,scope) => scope==='NJ'?c.N : scope==='VS'?c.V : c.H;
-const itemAmt = (it,scope) => scope==='NJ'?it.n : scope==='VS'?it.v : it.n+it.v;
 
 /* ============ Diagramm ============ */
 function niceStep(x){ const p=Math.pow(10,Math.floor(Math.log10(x))); const f=x/p; return (f<=1?1:f<=2?2:f<=5?5:10)*p; }
@@ -346,92 +437,350 @@ function chart(labels, series){
   return s;
 }
 
-/* ============ Ansichten ============ */
+
+/* ============ UI-Zustand ============ */
+const ui = {
+  tab:'dash', key:nowKey(), scope:lsGet('budget_scope','all'), year:new Date().getFullYear(),
+  yview:'year', q:'', fKat:'', fStat:'on', user:null, phase:'boot', err:'', pending:false, focusId:null
+};
+const scopeLabel = {all:'Haushalt', NJ:'Nicola', VS:'Vanessa'};
+const pick = (c,scope) => scope==='NJ'?c.N : scope==='VS'?c.V : c.H;
+const itemAmt = (it,scope) => scope==='NJ'?it.n : scope==='VS'?it.v : it.n+it.v;
+const WER_OPT = [['NJ','Nicola'],['VS','Vanessa'],['50/50','50 / 50']];
+const ART_OPT = [['Monatlich','Monatlich'],['Einmalig','Einmalig'],['Jährlich','Jährlich'],['Lohn','Weitere Einnahme']];
+
+/* ============ Bausteine ============ */
 function scopeSeg(){
   return `<div class="seg">${['all','NJ','VS'].map(s=>`<button class="${ui.scope===s?'on '+(s==='NJ'?'nj':s==='VS'?'vs':''):''}" data-scope="${s}">${scopeLabel[s]}</button>`).join('')}</div>`;
 }
 function monthNav(){
   return `<div class="mnav"><button data-mshift="-1" aria-label="Vorheriger Monat">‹</button>
-    <div class="lab">${label(ui.key)}<input type="month" value="${toInput(ui.key)}" data-mpick aria-label="Monat wählen"></div>
+    <div class="lab" style="line-height:38px">${label(ui.key)}<input type="month" value="${toInput(ui.key)}" data-mpick aria-label="Monat wählen"></div>
     <button data-mshift="1" aria-label="Nächster Monat">›</button></div>`;
 }
-function viewMonth(){
-  const md=monthData(ui.key), c=calc(md), P=pick(c,ui.scope);
+function yearNav(){
+  return `<div class="mnav"><button data-yshift="-1" aria-label="Vorheriges Jahr">‹</button><div class="lab" style="line-height:38px">${ui.year}</div><button data-yshift="1" aria-label="Nächstes Jahr">›</button></div>`;
+}
+function topbar(title,{month=false,year=false,scope=false}={}){
+  return `<div class="topbar"><h1>${title}</h1>${month?monthNav():''}${year?yearNav():''}${scope?scopeSeg():''}</div>`;
+}
+
+/* ============ Dashboard ============ */
+function viewDash(){
+  const md=monthData(ui.key), c=calc(md), P=pick(c,ui.scope), cur=nowKey();
   const empty = !S.entries.length && !Object.keys(S.lohn).length;
-  let h=`<div class="bar">${monthNav()}<span class="grow"></span>${scopeSeg()}</div>`;
-  if(empty){
-    h+=`<div class="card"><h2>Willkommen</h2><p>Noch keine Daten. Du kannst deine Startdaten aus dem Excel (Fixkosten, Löhne Juli–September) laden oder von Hand mit <b>＋</b> beginnen.</p><div class="actions"><button class="btn" data-act="seed">Startdaten laden</button></div></div>`;
-  }
-  const rows=[['ein','Einnahmen',''],['mon','Monatliche Ausgaben',''],['einm','Einmalige Ausgaben',''],['steuer','Buchung ans Steuerkonto','jährliche Kosten ÷ 12'],['spar','Buchung ins Sparkonto','']];
-  const quote=P.ein?P.spar/P.ein:0;
-  h+=`<div class="grid two"><div>
-    <div class="card"><h2>${label(ui.key)} · ${scopeLabel[ui.scope]}${md.frozen?'<span class="frozen">🔒 eingefroren</span>':''}</h2>
-    ${rows.map(([f,l,sub])=>`<div class="kv ${f}"><div class="l">${l}${sub?`<small>${sub}</small>`:''}</div><div class="v ${f==='spar'&&P[f]<0?'neg':''}">${chf(P[f])}</div></div>`).join('')}
-    <div class="quote"><span>Sparquote</span><span>${P.ein?(quote*100).toFixed(1)+' %':'–'}</span></div>
-    ${ui.scope==='all'?`<div class="sub3"><div class="n">Nicola spart<b>${chf(c.N.spar)}</b></div><div class="v">Vanessa spart<b>${chf(c.V.spar)}</b></div><div>Steuerkonto<b>${chf(c.H.steuer)}</b></div></div>`:''}
-    </div>`;
-  // Kategorien
+  let h=topbar('Übersicht',{month:true,scope:true});
+  if(empty) h+=`<div class="panel"><div class="ph"><h2>Willkommen</h2></div><p style="margin:0 0 8px">Noch keine Daten. Lade deine Startdaten aus dem Excel (Fixkosten, Löhne Juli bis September) oder lege mit <b>Eintrag hinzufügen</b> los.</p><div class="actions"><button class="btn" data-act="seed">Startdaten laden</button><button class="btn sec" data-act="add">Eintrag hinzufügen</button></div></div>`;
+  const kp=[['ein','Einnahmen'],['mon','Monatliche Ausgaben'],['einm','Einmalige Ausgaben'],['steuer','Steuerkonto (jährlich ÷ 12)'],['spar','Sparkonto']];
+  h+=`<div class="kpis">`+kp.map(([f,l])=>`<div class="kpi ${f}"><div class="kl">${l}</div><div class="kv2 ${f==='spar'&&P[f]<0?'neg':''}">${chf(P[f])}</div><div class="ks">${ui.scope==='all'?`<span class="n">N ${fmt0(c.N[f])}</span> · <span class="v">V ${fmt0(c.V[f])}</span>`:(f==='spar'&&P.ein?'Sparquote '+(P.spar/P.ein*100).toFixed(1)+' %':'&nbsp;')}</div></div>`).join('')+`</div>`;
+  /* linke Spalte */
+  let L='';
+  const rows=[['ein','Einnahmen'],['mon','Monatliche Ausgaben'],['einm','Einmalige Ausgaben'],['steuer','Buchung ans Steuerkonto'],['spar','Buchung ins Sparkonto']];
+  L+=`<div class="panel"><div class="ph"><h2>Nicola und Vanessa${md.frozen?'<span class="frozen">🔒 eingefroren</span>':''}</h2>${md.frozen?'<button class="btn sec sm" data-fedit="'+ui.key+'">Monat bearbeiten</button>':''}</div>
+   <table class="ledger"><tr><th></th><th class="n">Nicola</th><th class="v">Vanessa</th><th>Haushalt</th></tr>`+
+   rows.map(([f,l])=>`<tr class="${f==='spar'?'spar':''}"><td>${l}${f==='steuer'?'<small>Jahreskosten ÷ 12</small>':''}</td><td class="n ${c.N[f]<0&&f==='spar'?'neg':''}">${fmt(c.N[f])}</td><td class="v ${c.V[f]<0&&f==='spar'?'neg':''}">${fmt(c.V[f])}</td><td class="h ${c.H[f]<0&&f==='spar'?'neg':''}">${fmt(c.H[f])}</td></tr>`).join('')+
+   `<tr><td style="color:var(--muted)">Sparquote</td><td class="n">${c.N.ein?(c.N.spar/c.N.ein*100).toFixed(1)+' %':'–'}</td><td class="v">${c.V.ein?(c.V.spar/c.V.ein*100).toFixed(1)+' %':'–'}</td><td class="h">${c.H.ein?(c.H.spar/c.H.ein*100).toFixed(1)+' %':'–'}</td></tr></table></div>`;
   const all=[...new Set([...cats(), ...Object.keys(c.cat)])];
-  const vals=all.map(k=>{const o=c.cat[k]||{n:0,v:0}; return {k,n:o.n,v:o.v,t:ui.scope==='NJ'?o.n:ui.scope==='VS'?o.v:o.n+o.v};}).filter(x=>x.t>0.004);
-  const mx=Math.max(1,...vals.map(x=>x.t));
-  const tot=vals.reduce((a,x)=>a+x.t,0);
-  h+=`<div class="card bars"><h2>Ausgaben nach Kategorie</h2>${vals.length?vals.sort((a,b)=>b.t-a.t).map(x=>{
-    const bar=ui.scope==='all'?`<i style="width:${x.n/mx*100}%;background:var(--nic)"></i><i style="width:${x.v/mx*100}%;background:var(--van)"></i>`:`<i style="width:${x.t/mx*100}%;background:${ui.scope==='NJ'?'var(--nic)':'var(--van)'}"></i>`;
-    return `<div class="row"><span>${esc(x.k)}</span><div class="track">${bar}</div><span class="amt">${fmt(x.t)}</span></div>`;}).join('')+`<div class="row" style="font-weight:700"><span>Total</span><span></span><span class="amt">${fmt(tot)}</span></div>`:'<div class="empty">Keine Ausgaben in diesem Monat.</div>'}
-    ${ui.scope==='all'?'<div class="legend"><span><i style="background:var(--nic)"></i>Nicola</span><span><i style="background:var(--van)"></i>Vanessa</span></div>':''}
-    <div class="hint" style="margin-top:8px">inkl. Steuerkonto-Anteil (Jahreskosten ÷ 12)</div></div>`;
-  h+=`</div><div>`;
-  // Detail
-  const lines=[];
-  if(ui.scope!=='VS' && md.lohnN) lines.push({kat:'Einnahmen',name:'Lohn Nicola',art:'Lohn',amt:md.lohnN,wer:'NJ'});
-  if(ui.scope!=='NJ' && md.lohnV) lines.push({kat:'Einnahmen',name:'Lohn Vanessa',art:'Lohn',amt:md.lohnV,wer:'VS'});
-  md.items.forEach(it=>{ const a=itemAmt(it,ui.scope); if(a>0.004) lines.push({kat:it.art==='Lohn'?'Einnahmen':it.kat,name:it.name,art:it.art,amt:a,wer:it.wer,betrag:it.betrag}); });
-  const groups={}; lines.forEach(l=>(groups[l.kat]=groups[l.kat]||[]).push(l));
-  const order=['Einnahmen',...all];
-  h+=`<div class="card"><h2>Was wird in diesem Monat bezahlt</h2>`;
-  if(!lines.length) h+='<div class="empty">Keine Einträge.</div>';
-  order.filter(k=>groups[k]).forEach(k=>{
-    const sum=groups[k].reduce((a,l)=>a+l.amt,0);
-    h+=`<details ${k==='Einnahmen'?'':'open'}><summary>${esc(k)} <span style="float:right;font-variant-numeric:tabular-nums">${fmt(sum)}</span></summary>`+
-      groups[k].map(l=>`<div class="item a-${l.art}" style="box-shadow:none;background:var(--bg)"><div class="m"><div class="t">${esc(l.name)}</div><div class="s"><span class="who ${l.wer==='50/50'?'b':l.wer}">${l.wer}</span>${l.art}${l.art==='Jährlich'?' · '+chf(l.betrag)+' ÷ 12':''}</div></div><div class="a">${fmt(l.amt)}</div></div>`).join('')+`</details>`;
+  const vals=all.map(k=>{const o=c.cat[k]||{n:0,v:0}; return {k,n:o.n,v:o.v,t:o.n+o.v};}).filter(x=>x.t>0.004).sort((a,b)=>b.t-a.t);
+  const mx=Math.max(1,...vals.map(x=>x.t)), tot=vals.reduce((a,x)=>a+x.t,0);
+  L+=`<div class="panel bars"><div class="ph"><h2>Ausgaben nach Kategorie</h2><span class="hint" style="margin:0">inkl. Steuerkonto-Anteil</span></div>`+
+   (vals.length?vals.map(x=>`<div class="row"><span>${esc(x.k)}</span><div class="track"><i style="width:${x.n/mx*100}%;background:var(--nic)"></i><i style="width:${x.v/mx*100}%;background:var(--van)"></i></div><span class="amt">${fmt(x.t)}</span></div>`).join('')+`<div class="row" style="font-weight:700"><span>Total</span><span></span><span class="amt">${fmt(tot)}</span></div><div class="legend"><span><i style="background:var(--nic)"></i>Nicola</span><span><i style="background:var(--van)"></i>Vanessa</span></div>`:'<div class="empty">Keine Ausgaben in diesem Monat.</div>')+`</div>`;
+  /* Zahlungen pro Person */
+  const pay=who=>{
+    const lines=[]; const sc=who==='NJ'?'n':'v';
+    const lohn=who==='NJ'?md.lohnN:md.lohnV;
+    md.items.forEach(it=>{ const a=it[sc]; if(a>0.004 && it.art!=='Lohn') lines.push({kat:it.kat,name:it.name,art:it.art,amt:a,id:it.id,betrag:it.betrag}); });
+    const g={}; lines.forEach(l=>(g[l.kat]=g[l.kat]||[]).push(l));
+    const out=all.filter(k=>g[k]).map(k=>`<div class="pl-cat"><span>${esc(k)}</span><span class="num">${fmt(g[k].reduce((a,l)=>a+l.amt,0))}</span></div>`+
+      g[k].sort((a,b)=>b.amt-a.amt).map(l=>`<div class="pl ${md.frozen||!l.id?'nolink':''}" ${md.frozen||!l.id?'':`data-edit="${l.id}"`}><span class="t">${esc(l.name||'(ohne Name)')}<small>${l.art==='Jährlich'?'jährlich '+fmt0(l.betrag):l.art==='Einmalig'?'einmalig':''}</small></span><span class="num">${fmt(l.amt)}</span></div>`).join('')).join('');
+    const tot=lines.reduce((a,l)=>a+l.amt,0);
+    return `<div><div class="pl-head ${sc}"><span>${who==='NJ'?'Nicola':'Vanessa'} zahlt</span><span class="num">${fmt(tot)}</span></div>${out||'<div class="empty">Keine Zahlungen.</div>'}</div>`;
+  };
+  L+=`<div class="panel"><div class="ph"><h2>Wer zahlt was in ${MONTHS[ymOf(ui.key).m-1]}</h2><span class="hint" style="margin:0">Zeile antippen zum Bearbeiten</span></div><div class="two">${pay('NJ')}${pay('VS')}</div></div>`;
+  /* rechte Spalte */
+  let R='';
+  const yr=yearData(ui.year);
+  R+=`<div class="panel"><div class="ph"><h2>Jahr ${ui.year}</h2><span class="hint" style="margin:0">${scopeLabel[ui.scope]}</span></div>${chart(yr.map(r=>MONTHS[r.m-1].slice(0,3)),[
+    {name:'Einnahmen',color:'#e0b72f',values:yr.map(r=>pick(r.c,ui.scope).ein)},
+    {name:'Ausgaben',color:'#79b35b',values:yr.map(r=>{const p=pick(r.c,ui.scope);return p.mon+p.einm;})},
+    {name:'Sparkonto',color:'#2563c9',values:yr.map(r=>pick(r.c,ui.scope).spar)}])}</div>`;
+  const expired=S.entries.filter(e=>status(e,cur)==='past');
+  const ending=S.entries.filter(e=>e.art!=='Einmalig'&&e.bis!=null&&e.bis>=ui.key&&e.bis<=ui.key+1&&isActive(e,ui.key));
+  const incompl=S.entries.filter(e=>!e.name||!(e.betrag>0));
+  const hl=[];
+  if(expired.length) hl.push(`<div class="hl"><span class="ic">🧹</span><div><b>${expired.length} abgelaufene Einträge</b><div class="hint" style="margin:0">Vergangene Monate sind eingefroren, du kannst sie löschen.</div><div class="actions" style="margin-top:6px"><button class="btn sec sm" data-act="cleanup">Aufräumen</button></div></div></div>`);
+  if(ending.length) hl.push(`<div class="hl"><span class="ic">⏳</span><div><b>Endet bald</b><div class="hint" style="margin:0">${ending.map(e=>esc(e.name)+' ('+short(e.bis)+')').join(', ')}</div></div></div>`);
+  if(incompl.length) hl.push(`<div class="hl"><span class="ic">⚠️</span><div><b>${incompl.length} unvollständige Einträge</b><div class="hint" style="margin:0">Ohne Name oder Betrag, siehe Einträge.</div></div></div>`);
+  const lastFrozen=Object.keys(S.frozen).map(Number).sort((a,b)=>b-a)[0];
+  hl.push(`<div class="hl"><span class="ic">🔒</span><div><b>${lastFrozen?'Eingefroren bis '+label(lastFrozen):'Noch nichts eingefroren'}</b><div class="hint" style="margin:0">Vergangene Monate ändern sich nicht mehr, wenn du Einträge änderst oder löschst.</div></div></div>`);
+  R+=`<div class="panel"><div class="ph"><h2>Hinweise</h2></div>${hl.join('')}</div>`;
+  R+=`<div class="panel"><div class="ph"><h2>Schnell erfassen</h2></div><div class="actions" style="margin-top:0"><button class="btn" data-act="add">Eintrag hinzufügen</button><button class="btn sec" data-tab="entries">Alle Einträge</button></div></div>`;
+  return h+`<div class="dgrid"><div>${L}</div><div>${R}</div></div>`;
+}
+
+/* ============ Einträge (direkt bearbeitbar) ============ */
+const isMobile=()=>window.matchMedia('(max-width:899px)').matches;
+try{ window.matchMedia('(max-width:899px)').addEventListener('change',()=>{ if(ui.phase==='app') render(); }); }catch{}
+function mrow(e){
+  const st=status(e,ui.key), range=e.art==='Einmalig'?short(e.ab):short(e.ab)+' – '+(e.bis==null?'offen':short(e.bis));
+  return `<div class="mrow ${st==='on'?'':'off'}" data-edit="${e.id}"><div class="m"><div class="t">${esc(e.name||'(ohne Name)')}</div><div class="s"><b style="color:${e.wer==='NJ'?'var(--nic)':e.wer==='VS'?'var(--van)':'var(--muted)'}">${e.wer==='NJ'?'Nicola':e.wer==='VS'?'Vanessa':'50/50'}</b> · ${e.art==='Lohn'?'Einnahme':e.art} · ${range}${st==='past'?' · abgelaufen':st==='future'?' · geplant':''}</div></div><div class="a num">${fmt(e.betrag)}${e.art==='Jährlich'?`<small>${fmt(monthlyAmount(e))} / Monat</small>`:''}</div></div>`;
+}
+function erow(e){
+  const st=status(e,ui.key), m=monthlyAmount(e), s=shares(e.wer), on=st==='on';
+  const opt=(list,v)=>list.map(([val,l])=>`<option value="${esc(val)}" ${v===val?'selected':''}>${l}</option>`).join('');
+  return `<div class="erow ${st}" data-eid="${e.id}" data-art="${e.art}">
+   <div class="c name"><span class="lb">Beschreibung</span><input data-f="name" value="${esc(e.name)}" placeholder="Beschreibung" autocomplete="off"></div>
+   <div class="c art"><span class="lb">Art</span><select data-f="art">${opt(ART_OPT,e.art)}</select></div>
+   <div class="c bet"><span class="lb">${e.art==='Jährlich'?'Jahresbetrag':'Betrag'}</span><input class="num" data-f="betrag" type="number" step="0.05" inputmode="decimal" value="${e.betrag}" style="text-align:right"></div>
+   <div class="c wer who-${e.wer==='50/50'?'b':e.wer}"><span class="lb">Wer zahlt</span><select data-f="wer">${opt(WER_OPT,e.wer)}</select></div>
+   <div class="c ab"><span class="lb">${e.art==='Einmalig'?'Monat':'Ab'}</span><input data-f="ab" type="month" value="${toInput(e.ab)}"></div>
+   <div class="c bis"><span class="lb">Bis</span><input data-f="bis" type="month" value="${toInput(e.bis)}" ${e.art==='Einmalig'?'disabled':''}></div>
+   <div class="c an num ${on?'':'dim'}"><span class="lb">Nicola</span>${on&&s.n?fmt(m*s.n):'–'}</div>
+   <div class="c av num ${on?'':'dim'}"><span class="lb">Vanessa</span>${on&&s.v?fmt(m*s.v):'–'}</div>
+   <div class="c act"><button class="ib" data-edit="${e.id}" title="Details, Kategorie, Betrag ab Monat ändern">✎</button><button class="ib" data-delrow="${e.id}" title="Löschen">🗑</button></div></div>`;
+}
+function viewEntries(){
+  const k=ui.key, q=ui.q.trim().toLowerCase();
+  let list=S.entries.slice();
+  if(q) list=list.filter(e=>(e.name||'').toLowerCase().includes(q)||(e.kat||'').toLowerCase().includes(q));
+  if(ui.fKat) list=list.filter(e=>(e.art==='Lohn'?'Lohn':e.kat)===ui.fKat);
+  if(ui.fStat!=='all') list=list.filter(e=>status(e,k)===ui.fStat);
+  if(ui.scope!=='all') list=list.filter(e=>{const s=shares(e.wer); return (ui.scope==='NJ'?s.n:s.v)>0;});
+  const groups={}; list.forEach(e=>{const g=e.art==='Lohn'?'Lohn':e.kat; (groups[g]=groups[g]||[]).push(e);});
+  const order=[...cats(),'Lohn']; Object.keys(groups).forEach(g=>{ if(!order.includes(g)) order.push(g); });
+  let h=topbar('Einträge',{month:true,scope:true});
+  h+=`<div class="fbar"><input type="search" data-q placeholder="Suchen …" value="${esc(ui.q)}">
+   <select data-fkat><option value="">Alle Kategorien</option>${[...cats(),'Lohn'].map(c=>`<option value="${esc(c)}" ${ui.fKat===c?'selected':''}>${c==='Lohn'?'Weitere Einnahmen':esc(c)}</option>`).join('')}</select>
+   <select data-fstat>${[['on','Gültig im '+MONTHS[ymOf(k).m-1]],['all','Alle'],['past','Abgelaufen'],['future','Geplant']].map(([v,l])=>`<option value="${v}" ${ui.fStat===v?'selected':''}>${l}</option>`).join('')}</select>
+   <span style="flex:1"></span><button class="btn" data-act="add">Eintrag hinzufügen</button></div>`;
+  const names=order.filter(g=>groups[g]||(!q&&!ui.fKat&&ui.fStat==='on'&&g!=='Lohn'));
+  names.forEach(g=>{
+    const arr=groups[g]||[];
+    const sum=arr.filter(e=>isActive(e,k)).reduce((a,e)=>{const s=shares(e.wer),m=monthlyAmount(e); return a+m*(ui.scope==='NJ'?s.n:ui.scope==='VS'?s.v:1);},0);
+    h+=`<div class="egroup"><div class="eg-h"><span>${g==='Lohn'?'Weitere Einnahmen':esc(g)}</span><span><span class="sum num">${arr.length?fmt(sum)+' / Monat':''}</span><button class="btn sec sm" data-addin="${esc(g)}">＋ Zeile</button></span></div>`;
+    if(arr.length){
+      if(isMobile()) h+=arr.sort((a,b)=>b.betrag-a.betrag).map(mrow).join(''); else {
+      h+=`<div class="ehead"><span>Beschreibung</span><span>Art</span><span class="r">Betrag</span><span>Wer zahlt</span><span>Ab</span><span>Bis</span><span class="r">Nicola</span><span class="r">Vanessa</span><span></span></div>`;
+      h+=arr.sort((a,b)=>(a.name||'').localeCompare(b.name||'','de')).map(erow).join(''); }
+    } else h+=`<div class="empty" style="padding:12px">Keine Einträge in diesem Filter.</div>`;
+    h+=`</div>`;
   });
-  h+=`</div></div></div>`;
+  if(!names.length) h+=`<div class="panel"><div class="empty">Keine Einträge gefunden.</div></div>`;
+  h+=`<div class="hint">${isMobile()?'Eintrag antippen zum Bearbeiten.':'Änderungen werden beim Verlassen des Feldes gespeichert. «Betrag ab Monat ändern» und «Beenden» findest du unter ✎.'}</div>`;
   return h;
 }
 
-function entryRow(e,k){
-  const st=status(e,k), m=monthlyAmount(e);
-  const range = e.art==='Einmalig' ? short(e.ab) : (short(e.ab)+' – '+(e.bis==null?'offen':short(e.bis)));
-  const stTxt = st==='on'?'': st==='past'?'· abgelaufen': st==='future'?'· geplant':'';
-  return `<div class="item a-${e.art} ${st==='on'?'':'off'}" data-edit="${e.id}">
-    <div class="m"><div class="t">${esc(e.name||'(ohne Name)')}</div>
-    <div class="s"><span class="who ${e.wer==='50/50'?'b':e.wer}">${e.wer}</span>${e.art} · ${range} ${stTxt}</div></div>
-    <div class="a">${fmt(e.betrag)}${e.art==='Jährlich'?`<small>${fmt(m)} / Monat</small>`:''}</div></div>`;
+/* ============ Admin / Verwaltung ============ */
+function viewAdmin(){
+  const frozenKeys=Object.keys(S.frozen).map(Number).sort((a,b)=>b-a);
+  const unlocked=(S.settings.unlocked||[]).slice().sort((a,b)=>b-a);
+  const user=backend&&backend.user, fb=backend&&backend.mode==='firebase';
+  let h=topbar('Verwaltung');
+  h+=`<div class="two"><div>
+  <div class="panel"><div class="ph"><h2>Verbindung</h2></div>
+   <p style="margin:0 0 8px">${fb?`☁ Firebase · angemeldet als <b>${esc(user&&user.email||'')}</b>`:'💾 Lokaler Modus – Daten nur in diesem Browser'}</p>
+   <div class="actions">${fb?'<button class="btn sec sm" data-act="logout">Abmelden</button>':''}${!fb?'<button class="btn sm" data-act="to-firebase">Mit Firebase verbinden</button>':'<button class="btn sec sm" data-act="to-local">Lokal testen</button>'}<button class="btn sec sm" data-act="reset-config">Firebase-Konfiguration ändern</button></div></div>
+  <div class="panel"><div class="ph"><h2>Zugriff</h2></div><div class="hint" style="line-height:1.6">Als Admin siehst und bearbeitest du alles. Wer zugreifen darf, steht in den Firestore-Regeln (Firebase → Firestore → Regeln): bei <code>request.auth.token.email in [...]</code> die Google-E-Mail von Vanessa ergänzen.</div></div>
+  <div class="panel"><div class="ph"><h2>Kategorien</h2></div>
+   ${cats().map(c=>{const used=S.entries.some(e=>e.kat===c); return `<div class="kvrow"><span>${esc(c)}</span>${used?'<span class="hint" style="margin:0">in Verwendung</span>':`<button class="btn sec sm" data-delcat="${esc(c)}">Entfernen</button>`}</div>`;}).join('')}
+   <form data-addcat class="actions"><input name="c" placeholder="Neue Kategorie" style="flex:1"><button class="btn sm">Hinzufügen</button></form></div>
+  <div class="panel"><div class="ph"><h2>Backup</h2></div><div class="actions" style="margin-top:0"><button class="btn sec sm" data-act="export">Daten exportieren (JSON)</button><label class="btn sec sm" style="cursor:pointer">Importieren<input type="file" accept="application/json" data-import hidden></label><button class="btn sec sm" data-act="seed">Startdaten laden</button></div></div>
+  </div><div>
+  <div class="panel"><div class="ph"><h2>Eingefrorene Monate</h2></div>
+   <div class="hint">Vergangene Monate werden automatisch eingefroren. Hier kannst du jeden Monat prüfen und im Detail ändern.</div>
+   ${frozenKeys.length?frozenKeys.map(k=>{const c=calc(S.frozen[k]); return `<div class="kvrow"><span>🔒 ${label(k)}<span class="hint" style="display:block;margin:0">Einnahmen ${fmt0(c.H.ein)} · Ausgaben ${fmt0(c.H.mon+c.H.einm)} · Sparkonto ${fmt0(c.H.spar)}</span></span><span><button class="btn sec sm" data-fedit="${k}">Bearbeiten</button> <button class="btn sec sm" data-refreeze="${k}" title="Aus heutigen Einträgen neu bilden">Neu berechnen</button></span></div>`;}).join(''):'<div class="empty">Noch nichts eingefroren (passiert automatisch ab dem nächsten Monat).</div>'}
+   ${unlocked.length?`<div class="hint" style="margin-top:10px">Entsperrt (rechnen live mit den Einträgen):</div>`+unlocked.map(k=>`<div class="kvrow"><span>🔓 ${label(k)}</span><button class="btn sec sm" data-relock="${k}">Wieder sperren</button></div>`).join(''):''}</div>
+  <div class="panel"><div class="ph"><h2>So funktioniert es</h2></div><div class="hint" style="line-height:1.7">
+   <b>Monatlich</b>: läuft jeden Monat weiter, bis «Bis» gesetzt ist.<br>
+   <b>Einmalig</b>: zählt nur in seinem Monat.<br>
+   <b>Jährlich</b>: Jahresbetrag, ÷ 12 ans Steuerkonto.<br>
+   <b>Abo beenden</b>: ✎ → «Beenden». Wieder abonniert: neue Zeile.<br>
+   <b>Preis ändert sich</b>: ✎ → «Betrag ab Monat ändern».</div></div>
+  </div></div>`;
+  return h;
 }
-function viewEntries(){
-  const k=ui.key;
-  let list=S.entries.slice();
-  if(ui.onlyActive) list=list.filter(e=>isActive(e,k));
-  if(ui.filterKat) list=list.filter(e=>(e.art==='Lohn'?'Lohn':e.kat)===ui.filterKat);
-  if(ui.scope!=='all') list=list.filter(e=>{const s=shares(e.wer); return (ui.scope==='NJ'?s.n:s.v)>0;});
-  const groups={}; list.forEach(e=>{const g=e.art==='Lohn'?'Weitere Einnahmen':e.kat; (groups[g]=groups[g]||[]).push(e);});
-  const order=['Weitere Einnahmen',...cats()]; Object.keys(groups).forEach(g=>{ if(!order.includes(g)) order.push(g); });
-  let h=`<div class="bar">${monthNav()}<span class="grow"></span>${scopeSeg()}</div>
-   <div class="bar"><select data-filter style="padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--card)"><option value="">Alle Kategorien</option>${['Lohn',...cats()].map(c=>`<option ${ui.filterKat===c?'selected':''} value="${esc(c)}">${c==='Lohn'?'Weitere Einnahmen':esc(c)}</option>`).join('')}</select>
-   <label style="display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted)"><input type="checkbox" data-only ${ui.onlyActive?'checked':''}> nur gültig im ${MONTHS[ymOf(k).m-1]}</label></div><div class="list">`;
-  const names=order.filter(g=>groups[g]);
-  if(!names.length) h+=`<div class="empty">Keine Einträge${ui.onlyActive?' in diesem Monat':''}.<br>Mit <b>＋</b> einen hinzufügen.</div>`;
-  names.forEach(g=>{
-    const sum=groups[g].filter(e=>isActive(e,k)).reduce((a,e)=>{const s=shares(e.wer),m=monthlyAmount(e); return a+m*(ui.scope==='NJ'?s.n:ui.scope==='VS'?s.v:1);},0);
-    h+=`<div class="grp"><span>${esc(g)}</span><span>${fmt(sum)}</span></div>`+groups[g].sort((a,b)=>(b.betrag-a.betrag)).map(e=>entryRow(e,k)).join('');
-  });
-  return h+`</div><button class="fab" data-act="add" aria-label="Eintrag hinzufügen">＋</button>`;
+
+/* ============ Eingefrorenen Monat bearbeiten ============ */
+function openFrozen(k){
+  const base=S.frozen[k]||{items:liveItems(k),lohnN:lohnBase(k).n,lohnV:lohnBase(k).v};
+  const fr=JSON.parse(JSON.stringify({items:base.items,lohnN:base.lohnN||0,lohnV:base.lohnV||0}));
+  const m=$('#modal'); const allc=[...cats()];
+  const draw=()=>{
+    m.innerHTML=`<div class="sheet wide"><h3>${label(k)} bearbeiten <span class="frozen">🔒 eingefroren</span></h3>
+    <div class="hint">Änderungen gelten nur für diesen Monat. Die laufenden Einträge bleiben unverändert.</div>
+    <div class="two-c"><label class="f">Lohn Nicola<input type="number" step="0.05" data-fl="lohnN" value="${fr.lohnN}"></label><label class="f">Lohn Vanessa<input type="number" step="0.05" data-fl="lohnV" value="${fr.lohnV}"></label></div>
+    <div>${fr.items.map((it,i)=>`<div class="frow" data-i="${i}">
+      <input data-ff="name" value="${esc(it.name)}" placeholder="Beschreibung">
+      <select data-ff="kat">${[...new Set([...allc,it.kat])].map(c=>`<option ${it.kat===c?'selected':''}>${esc(c)}</option>`).join('')}</select>
+      <select data-ff="art">${ART_OPT.map(([v,l])=>`<option value="${v}" ${it.art===v?'selected':''}>${l}</option>`).join('')}</select>
+      <input data-ff="betrag" type="number" step="0.05" value="${it.betrag}" style="text-align:right">
+      <select data-ff="wer">${WER_OPT.map(([v,l])=>`<option value="${v}" ${it.wer===v?'selected':''}>${l}</option>`).join('')}</select>
+      <button class="ib" type="button" data-fdel="${i}">🗑</button></div>`).join('')}</div>
+    <div class="actions"><button class="btn sec sm" type="button" data-fadd>＋ Zeile</button></div>
+    <div class="actions" style="margin-top:14px"><button class="btn grow" type="button" data-fsave>Speichern</button><button class="btn sec" type="button" data-close>Abbrechen</button></div>
+    <div class="actions" style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px"><button class="btn sec sm" type="button" data-funlock>Entsperren (wieder live berechnen)</button></div></div>`;
+    m.classList.add('on');
+    const sync=()=>{
+      m.querySelectorAll('[data-fl]').forEach(i=>fr[i.dataset.fl]=parseFloat(i.value)||0);
+      m.querySelectorAll('.frow').forEach(r=>{const it=fr.items[+r.dataset.i]; r.querySelectorAll('[data-ff]').forEach(i=>{const f=i.dataset.ff; it[f]=f==='betrag'?(parseFloat(i.value)||0):i.value;});});
+    };
+    m.querySelectorAll('[data-fdel]').forEach(b=>b.onclick=()=>{ sync(); fr.items.splice(+b.dataset.fdel,1); draw(); });
+    $('[data-fadd]',m).onclick=()=>{ sync(); fr.items.push({id:null,art:'Einmalig',kat:allc[0],name:'',betrag:0,wer:'50/50'}); draw(); };
+    $('[data-close]',m).onclick=closeModal;
+    $('[data-fsave]',m).onclick=async()=>{
+      sync();
+      const items=fr.items.map(it=>{ const mm=it.art==='Jährlich'?it.betrag/12:it.betrag, s=shares(it.wer); return {id:it.id||null,art:it.art,kat:it.art==='Lohn'?'Lohn':it.kat,name:it.name,betrag:it.betrag,wer:it.wer,n:mm*s.n,v:mm*s.v}; });
+      await backend.set('frozen',String(k),{key:k,items,lohnN:fr.lohnN,lohnV:fr.lohnV,at:Date.now()});
+      closeModal(); toast('Monat gespeichert');
+    };
+    $('[data-funlock]',m).onclick=async()=>{
+      if(!confirm('Monat entsperren? Er wird dann wieder aus den laufenden Einträgen berechnet.')) return;
+      await backend.set('settings','main',{...S.settings,unlocked:[...new Set([...(S.settings.unlocked||[]),k])]});
+      await backend.del('frozen',String(k)); closeModal(); toast('Entsperrt');
+    };
+  };
+  draw();
+}
+
+/* ============ Rendern ============ */
+const TABS=[['dash','🏠','Übersicht'],['entries','🧾','Einträge'],['lohn','💼','Löhne'],['year','📊','Jahre'],['admin','⚙️','Verwaltung']];
+function render(){
+  const app=$('#app');
+  if(ui.phase==='setup') return renderSetup(app);
+  if(ui.phase==='login') return renderLogin(app);
+  if(ui.phase==='boot'||ui.phase==='loading'){ app.innerHTML=`<div class="center"><div>${ui.err?esc(ui.err):'Lade …'}</div></div>`; return; }
+  if(ui.phase==='denied'){ app.innerHTML=`<div class="center"><div class="panel"><div class="ph"><h2>Kein Zugriff</h2></div><p>${esc(ui.user&&ui.user.email||'')} ist für dieses Budget nicht freigeschaltet (Firestore-Regeln).</p><div class="actions"><button class="btn" data-act="logout">Mit anderem Konto anmelden</button></div></div></div>`; return; }
+  const body = ui.tab==='dash'?viewDash(): ui.tab==='entries'?viewEntries(): ui.tab==='lohn'?topbar('Löhne',{month:false})+viewLohn(): ui.tab==='year'?viewYearPage(): viewAdmin();
+  const fb=backend&&backend.mode==='firebase';
+  const mail=fb&&backend.user?backend.user.email:'';
+  const sy=window.scrollY;
+  app.innerHTML=`<div class="shell"><aside class="side"><div class="logo"><i></i>Haushaltsbudget</div>
+    ${TABS.map(([id,i,l])=>`<button class="nv ${ui.tab===id?'on':''}" data-tab="${id}"><span class="i">${i}</span>${l}</button>`).join('')}
+    <div class="foot"><span class="pill ${fb?'ok':''}">${fb?'☁ synchronisiert':'💾 lokal'}</span>${mail?`<b style="margin-top:8px">${esc(mail)}</b>Admin`:''}</div></aside>
+    <main class="main">${body}</main></div>`;
+  if(ui.focusId){ const el=$(`[data-eid="${ui.focusId}"] [data-f=name]`); if(el){ el.focus(); el.scrollIntoView({block:'center'}); } ui.focusId=null; }
+  else if(ui.keepScroll){ window.scrollTo(0,sy); }
+  ui.keepScroll=false;
+}
+function viewYearPage(){
+  return topbar('Jahre',{year:true,scope:true}).replace('</div></div>','</div></div>')+viewYearBody();
+}
+function renderLogin(app){
+  app.innerHTML=`<div class="center"><div class="logo" style="font-size:22px"><i style="width:40px;height:40px;border-radius:11px"></i>Haushaltsbudget</div><div class="panel"><div class="ph"><h2>Anmelden</h2></div><p style="margin-top:0">Die Daten sind privat und nur für freigeschaltete Konten sichtbar.</p><div class="actions"><button class="btn grow" data-act="login">Mit Google anmelden</button></div>${ui.err?`<div class="err">${esc(ui.err)}</div>`:''}<div class="actions" style="margin-top:14px"><button class="btn sec sm" data-act="to-local">Lokal testen (ohne Anmeldung)</button><button class="btn sec sm" data-act="reset-config">Konfiguration ändern</button></div></div></div>`;
+}
+function renderSetup(app){
+  app.innerHTML=`<div class="center"><div class="logo" style="font-size:22px"><i style="width:40px;height:40px;border-radius:11px"></i>Haushaltsbudget</div><div class="panel"><div class="ph"><h2>Firebase verbinden</h2></div>
+  <p style="margin-top:0">Firebase-Konsole → Projekteinstellungen → Allgemein → Deine Apps → SDK-Konfiguration → «Konfiguration». Den ganzen <code>firebaseConfig</code>-Block hier einfügen:</p>
+  <textarea id="cfgtxt" placeholder='const firebaseConfig = {\n  apiKey: "…",\n  projectId: "…",\n  …\n};'></textarea>
+  ${ui.err?`<div class="err">${esc(ui.err)}</div>`:''}
+  <div class="actions"><button class="btn" data-act="save-config">Verbinden</button><button class="btn sec" data-act="to-local">Erst lokal testen</button></div></div></div>`;
+}
+
+/* ============ Ereignisse ============ */
+async function saveEntryField(row,f,val){
+  const e=S.entries.find(x=>x.id===row.dataset.eid); if(!e) return;
+  const o={...e}; delete o.id;
+  if(f==='betrag') o.betrag=parseFloat(val)||0;
+  else if(f==='ab'){ const k=fromInput(val); if(k==null){ toast('Monat fehlt'); render(); return; } o.ab=k; }
+  else if(f==='bis') o.bis=fromInput(val);
+  else o[f]=val;
+  if(o.art==='Einmalig') o.bis=null;
+  if(o.art==='Lohn') o.kat='Lohn'; else if(o.kat==='Lohn') o.kat=cats()[0];
+  if(o.bis!=null && o.bis<o.ab){ toast('«Bis» liegt vor «Ab»'); render(); return; }
+  await autoFreeze();
+  await backend.set('entries',e.id,o);
+}
+document.addEventListener('click', async ev=>{
+  const t=ev.target.closest('[data-tab],[data-scope],[data-mshift],[data-yshift],[data-yview],[data-edit],[data-act],[data-refreeze],[data-delcat],[data-delrow],[data-addin],[data-fedit],[data-relock]');
+  if(!t) return;
+  const d=t.dataset;
+  if(d.tab){ ui.tab=d.tab; render(); window.scrollTo(0,0); }
+  else if(d.scope){ ui.scope=d.scope; lsSet('budget_scope',d.scope); ui.keepScroll=true; render(); }
+  else if(d.mshift){ ui.key+=+d.mshift; ui.year=ymOf(ui.key).y; ui.keepScroll=true; render(); }
+  else if(d.yshift){ ui.year+=+d.yshift; ui.keepScroll=true; render(); }
+  else if(d.yview){ ui.yview=d.yview; ui.keepScroll=true; render(); }
+  else if(d.edit){ openEntry(d.edit); }
+  else if(d.fedit){ openFrozen(+d.fedit); }
+  else if(d.refreeze){ await refreezeMonth(+d.refreeze); }
+  else if(d.relock){ const k=+d.relock; await backend.set('settings','main',{...S.settings,unlocked:(S.settings.unlocked||[]).filter(x=>x!==k)}); await refreezeMonth(k); }
+  else if(d.delcat){ await backend.set('settings','main',{...S.settings,kats:cats().filter(c=>c!==d.delcat)}); }
+  else if(d.delrow){
+    const e=S.entries.find(x=>x.id===d.delrow); if(!e) return;
+    if(!confirm(`«${e.name||'Eintrag'}» wirklich löschen?\nVergangene (eingefrorene) Monate bleiben unverändert.`)) return;
+    await autoFreeze(); await backend.del('entries',e.id); toast('Gelöscht');
+  }
+  else if(d.addin!==undefined){
+    const g=d.addin; const id=uid();
+    const obj={art:g==='Lohn'?'Lohn':'Monatlich',kat:g==='Lohn'?'Lohn':g,name:'',betrag:0,wer:'50/50',ab:ui.key,bis:null};
+    ui.focusId=id; ui.fStat='on'; await backend.set('entries',id,obj);
+  }
+  else if(d.act){
+    const a=d.act;
+    if(a==='add') openEntry(null);
+    else if(a==='seed') await seedData();
+    else if(a==='export') exportData();
+    else if(a==='cleanup'){
+      const exp=S.entries.filter(e=>status(e,nowKey())==='past');
+      if(!exp.length) return;
+      if(!confirm(`${exp.length} abgelaufene Einträge löschen?\nVergangene Monate sind eingefroren und bleiben unverändert.`)) return;
+      await autoFreeze(); await backend.batch(exp.map(e=>({col:'entries',id:e.id,del:true}))); toast(exp.length+' gelöscht');
+    }
+    else if(a==='login'){ try{ ui.err=''; await backend.signIn(); }catch(e){ ui.err='Anmeldung fehlgeschlagen: '+(e.code||e.message); render(); } }
+    else if(a==='logout'){ await backend.signOut(); ui.phase='login'; ready=false; render(); }
+    else if(a==='to-local'){ lsSet('budget_mode','local'); location.reload(); }
+    else if(a==='to-firebase'){ lsDel('budget_mode'); location.reload(); }
+    else if(a==='reset-config'){ lsDel('budget_fbconfig'); lsDel('budget_mode'); ui.phase='setup'; ui.err=''; render(); }
+    else if(a==='save-config'){
+      const txt=$('#cfgtxt').value; const cfg={...FIREBASE_CONFIG};
+      for(const m of txt.matchAll(/["']?(\w+)["']?\s*:\s*["']([^"']*)["']/g)) cfg[m[1]]=m[2];
+      if(!cfg.apiKey||!cfg.projectId){ ui.err='apiKey und projectId fehlen im eingefügten Text.'; render(); return; }
+      if(!cfg.authDomain) cfg.authDomain=cfg.projectId+'.firebaseapp.com';
+      lsSet('budget_fbconfig',JSON.stringify(cfg)); lsDel('budget_mode'); location.reload();
+    }
+  }
+});
+document.addEventListener('mousedown',ev=>{ if(ev.target.id==='modal') closeModal(); });
+document.addEventListener('change', async ev=>{
+  const t=ev.target;
+  if(t.matches('[data-mpick]')){ const k=fromInput(t.value); if(k){ ui.key=k; ui.year=ymOf(k).y; render(); } }
+  else if(t.matches('[data-fkat]')){ ui.fKat=t.value; render(); }
+  else if(t.matches('[data-fstat]')){ ui.fStat=t.value; render(); }
+  else if(t.matches('[data-import]')){ if(t.files[0]) await importData(t.files[0]); t.value=''; }
+  else if(t.matches('input[data-lohn]')){ const v=t.value===''?'':parseFloat(t.value); await saveLohn(+t.dataset.lohn,t.dataset.p,v); }
+  else if(t.matches('.erow [data-f]')){ await saveEntryField(t.closest('[data-eid]'),t.dataset.f,t.value); }
+});
+document.addEventListener('input', ev=>{
+  const t=ev.target;
+  if(t.matches('[data-q]')){ ui.q=t.value; const pos=t.selectionStart; render(); const n=$('[data-q]'); if(n){ n.focus(); n.setSelectionRange(pos,pos); } }
+});
+document.addEventListener('focusout', ev=>{
+  if(!ui.pending) return;
+  const r=ev.relatedTarget;
+  if(r && r.closest && r.closest('[data-eid],input[data-lohn]')) return;
+  ui.pending=false; setTimeout(()=>{ ui.keepScroll=true; render(); },60);
+});
+document.addEventListener('submit', async ev=>{
+  if(ev.target.matches('[data-addcat]')){
+    ev.preventDefault(); const c=ev.target.c.value.trim(); if(!c) return;
+    if(cats().includes(c)){ toast('Gibt es schon'); return; }
+    await backend.set('settings','main',{...S.settings,kats:[...cats(),c]});
+  }
+});
+document.addEventListener('keydown', ev=>{ if(ev.key==='Escape') closeModal(); });
+
+/* ============ Start ============ */
+function onData(d){
+  S=d;
+  const a=document.activeElement;
+  if(a && a.matches && a.matches('.erow input,.erow select,input[data-lohn]') && ui.phase==='app'){ ui.pending=true; return; }
+  if(ui.phase==='loading') ui.phase='app';
+  ui.keepScroll=true; render();
 }
 
 function viewLohn(){
   const f=firstKey(), cur=nowKey();
   const start=Math.min(f==null?cur:f, cur-1), end=cur+12;
-  let h=`<div class="card"><h2>Löhne pro Monat</h2><div class="hint">Nur den tatsächlichen Lohn des Monats eintragen. Leer = gleicher Lohn wie im Vormonat (grau angezeigt). Alte Monate bleiben stehen – nichts löschen.</div>
+  let h=`<div class="panel"><h2>Löhne pro Monat</h2><div class="hint">Nur den tatsächlichen Lohn des Monats eintragen. Leer = gleicher Lohn wie im Vormonat (grau angezeigt). Alte Monate bleiben stehen – nichts löschen.</div>
   <div class="lohn-head"><span>Monat</span><span>Nicola</span><span>Vanessa</span></div>`;
   for(let k=start;k<=end;k++){
     const o=S.lohn[k]||{}, b=lohnBase(k);
@@ -442,44 +791,44 @@ function viewLohn(){
   return h+`</div>`;
 }
 
+
 function yearData(y){
   const out=[];
   for(let m=1;m<=12;m++){ const md=monthData(MK(y,m)); out.push({m,k:MK(y,m),c:calc(md),frozen:md.frozen}); }
   return out;
 }
 const sumField=(rows,P,f)=>rows.reduce((a,r)=>a+pick(r.c,P)[f],0);
-function viewYear(){
+function viewYearBody(){
   const sc=ui.scope;
-  let h=`<div class="bar"><div class="mnav"><button data-yshift="-1">‹</button><div class="lab">${ui.year}</div><button data-yshift="1">›</button></div>
-    <div class="seg"><button class="${ui.yview==='year'?'on':''}" data-yview="year">Jahr</button><button class="${ui.yview==='cmp'?'on':''}" data-yview="cmp">Vergleich</button></div><span class="grow"></span>${scopeSeg()}</div>`;
+  let h=`<div class="fbar"><div class="seg"><button class="${ui.yview==='year'?'on':''}" data-yview="year">Jahr</button><button class="${ui.yview==='cmp'?'on':''}" data-yview="cmp">Vergleich</button></div></div>`;
   if(ui.yview==='year'){
     const rows=yearData(ui.year), cur=nowKey();
     const ausg=r=>{const P=pick(r.c,sc); return P.mon+P.einm;};
-    h+=`<div class="card"><h2>Jahresübersicht ${ui.year} · ${scopeLabel[sc]}</h2><div class="scroll"><table class="t"><tr><th>Monat</th><th>Einn.</th><th>Ausg.</th><th>Steuerk.</th><th>Spar</th></tr>`+
+    h+=`<div class="panel"><h2>Jahresübersicht ${ui.year} · ${scopeLabel[sc]}</h2><div class="scroll"><table class="t"><tr><th>Monat</th><th>Einn.</th><th>Ausg.</th><th>Steuerk.</th><th>Spar</th></tr>`+
       rows.map(r=>{const P=pick(r.c,sc); return `<tr class="${r.k===ui.key?'cur':r.k>cur?'fut':''}"><td>${MONTHS[r.m-1].slice(0,3)}${r.frozen?' 🔒':''}</td><td>${fmt0(P.ein)}</td><td>${fmt0(ausg(r))}</td><td>${fmt0(P.steuer)}</td><td class="${P.spar<0?'neg':''}">${fmt0(P.spar)}</td></tr>`;}).join('')+
       `<tr class="tot"><td>Total</td><td>${fmt0(sumField(rows,sc,'ein'))}</td><td>${fmt0(rows.reduce((a,r)=>a+ausg(r),0))}</td><td>${fmt0(sumField(rows,sc,'steuer'))}</td><td>${fmt0(sumField(rows,sc,'spar'))}</td></tr></table></div>
       <div class="hint">🔒 = eingefroren · grau = geplant (aus den laufenden Einträgen hochgerechnet)</div></div>
-      <div class="card"><h2>Verlauf</h2>${chart(rows.map(r=>MONTHS[r.m-1].slice(0,3)),[
+      <div class="panel"><h2>Verlauf</h2>${chart(rows.map(r=>MONTHS[r.m-1].slice(0,3)),[
         {name:'Einnahmen',color:'#FFC000',values:rows.map(r=>pick(r.c,sc).ein)},
         {name:'Ausgaben',color:'#70AD47',values:rows.map(ausg)},
         {name:'Sparkonto',color:'#2E75B6',values:rows.map(r=>pick(r.c,sc).spar)}])}</div>`;
     const all=[...new Set([...cats(),...rows.flatMap(r=>Object.keys(r.c.cat))])];
     const ct=all.map(k=>{let n=0,v=0; rows.forEach(r=>{const o=r.c.cat[k]; if(o){n+=o.n;v+=o.v;}}); return {k,n,v};}).filter(x=>x.n+x.v>0.004);
-    h+=`<div class="card"><h2>Ausgaben nach Kategorie (inkl. Steuerkonto-Anteil)</h2><div class="scroll"><table class="t"><tr><th>Kategorie</th><th>Nicola</th><th>Vanessa</th><th>Total</th></tr>`+
+    h+=`<div class="panel"><h2>Ausgaben nach Kategorie (inkl. Steuerkonto-Anteil)</h2><div class="scroll"><table class="t"><tr><th>Kategorie</th><th>Nicola</th><th>Vanessa</th><th>Total</th></tr>`+
       ct.map(x=>`<tr><td>${esc(x.k)}</td><td>${fmt0(x.n)}</td><td>${fmt0(x.v)}</td><td>${fmt0(x.n+x.v)}</td></tr>`).join('')+
       `<tr class="tot"><td>Total</td><td>${fmt0(ct.reduce((a,x)=>a+x.n,0))}</td><td>${fmt0(ct.reduce((a,x)=>a+x.v,0))}</td><td>${fmt0(ct.reduce((a,x)=>a+x.n+x.v,0))}</td></tr></table></div></div>`;
   } else {
     const ys=[ui.year-1,ui.year,ui.year+1,ui.year+2,ui.year+3];
     const data=ys.map(y=>({y,rows:yearData(y)}));
     const line=(lab,fn,cls='')=>`<tr class="${cls}"><td>${lab}</td>${data.map(d=>`<td>${fn(d.rows)}</td>`).join('')}</tr>`;
-    h+=`<div class="card"><h2>Jahresvergleich · ${scopeLabel[sc]}</h2><div class="scroll"><table class="t"><tr><th></th>${ys.map(y=>`<th>${y}</th>`).join('')}</tr>`+
+    h+=`<div class="panel"><h2>Jahresvergleich · ${scopeLabel[sc]}</h2><div class="scroll"><table class="t"><tr><th></th>${ys.map(y=>`<th>${y}</th>`).join('')}</tr>`+
       line('Einnahmen',r=>fmt0(sumField(r,sc,'ein')))+
       line('Monatl. + einm. Ausgaben',r=>fmt0(sumField(r,sc,'mon')+sumField(r,sc,'einm')))+
       line('Steuerkonto',r=>fmt0(sumField(r,sc,'steuer')))+
       line('Sparkonto',r=>fmt0(sumField(r,sc,'spar')),'tot')+
       line('Sparquote',r=>{const e=sumField(r,sc,'ein'); return e?(sumField(r,sc,'spar')/e*100).toFixed(1)+' %':'–';})+`</table></div>
       <div class="hint">Zukünftige Jahre sind Hochrechnungen aus den laufenden Einträgen.</div></div>
-      <div class="card"><h2>Vergleich</h2>${chart(ys.map(String),[
+      <div class="panel"><h2>Vergleich</h2>${chart(ys.map(String),[
         {name:'Einnahmen',color:'#FFC000',values:data.map(d=>sumField(d.rows,sc,'ein'))},
         {name:'Ausgaben',color:'#70AD47',values:data.map(d=>sumField(d.rows,sc,'mon')+sumField(d.rows,sc,'einm')+sumField(d.rows,sc,'steuer'))},
         {name:'Sparkonto',color:'#2E75B6',values:data.map(d=>sumField(d.rows,sc,'spar'))}])}</div>`;
@@ -487,59 +836,6 @@ function viewYear(){
   return h;
 }
 
-function viewMore(){
-  const f=firstKey(), cur=nowKey();
-  const frozenKeys=Object.keys(S.frozen).map(Number).sort((a,b)=>b-a);
-  const user=backend&&backend.user;
-  let h=`<div class="grid two"><div>
-  <div class="card"><h2>Verbindung</h2>
-    <p style="margin:0 0 8px">${backend&&backend.mode==='firebase'?`☁ Firebase · angemeldet als <b>${esc(user&&user.email||'')}</b>`:'💾 Lokaler Modus – Daten nur in diesem Browser'}</p>
-    <div class="actions">${backend&&backend.mode==='firebase'?'<button class="btn sec sm" data-act="logout">Abmelden</button>':''}
-    ${backend&&backend.mode==='local'?'<button class="btn sm" data-act="to-firebase">Mit Firebase verbinden</button>':'<button class="btn sec sm" data-act="to-local">Lokal testen</button>'}
-    <button class="btn sec sm" data-act="reset-config">Firebase-Konfiguration ändern</button></div></div>
-  <div class="card"><h2>Kategorien</h2>
-    ${cats().map(c=>{const used=S.entries.some(e=>e.kat===c); return `<div class="kv" style="background:var(--bg)"><span>${esc(c)}</span>${used?'<small style="color:var(--muted)">in Verwendung</small>':`<button class="btn sec sm" data-delcat="${esc(c)}">Entfernen</button>`}</div>`;}).join('')}
-    <form data-addcat class="actions"><input name="c" placeholder="Neue Kategorie" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--bg)"><button class="btn sm">Hinzufügen</button></form></div>
-  <div class="card"><h2>Backup</h2><div class="actions"><button class="btn sec sm" data-act="export">Daten exportieren (JSON)</button><label class="btn sec sm" style="cursor:pointer">Importieren<input type="file" accept="application/json" data-import hidden></label><button class="btn sec sm" data-act="seed">Startdaten laden</button></div>
-  <div class="hint">Import und Startdaten fügen hinzu bzw. überschreiben gleiche Einträge nicht doppelt.</div></div>
-  </div><div>
-  <div class="card"><h2>Verlauf (eingefrorene Monate)</h2>
-  <div class="hint">Vergangene Monate werden automatisch eingefroren. Danach kannst du Einträge löschen oder ändern, ohne dass sich alte Monate verändern. Neu berechnen = Monat nochmals aus den heutigen Einträgen und Löhnen bilden.</div>
-  ${frozenKeys.length?frozenKeys.map(k=>`<div class="kv" style="background:var(--bg)"><span>🔒 ${label(k)}</span><button class="btn sec sm" data-refreeze="${k}">Neu berechnen</button></div>`).join(''):'<div class="empty">Noch keine Monate eingefroren (passiert automatisch ab dem nächsten Monat).</div>'}
-  </div>
-  <div class="card"><h2>Hinweise</h2><div class="hint" style="line-height:1.6">
-   • <b>Monatlich</b>: läuft jeden Monat weiter, bis ein «Bis Monat» gesetzt ist.<br>
-   • <b>Einmalig</b>: zählt nur im gewählten Monat.<br>
-   • <b>Jährlich</b>: Jahresbetrag, wird ÷ 12 ans Steuerkonto gebucht.<br>
-   • <b>Abo beenden</b>: Eintrag öffnen → «Ab diesem Monat beenden». Wieder abonniert? Neuen Eintrag anlegen.<br>
-   • <b>Preis ändert sich</b>: Eintrag öffnen → «Betrag ab diesem Monat ändern».</div></div>
-  </div></div>`;
-  return h;
-}
-
-/* ============ Rendern ============ */
-const TABS=[['month','🏠','Monat'],['entries','🧾','Einträge'],['lohn','💼','Löhne'],['year','📊','Jahr'],['more','⚙️','Mehr']];
-function render(){
-  const app=$('#app');
-  if(ui.phase==='setup') return renderSetup(app);
-  if(ui.phase==='login') return renderLogin(app);
-  if(ui.phase==='boot'||ui.phase==='loading'){ app.innerHTML=`<div class="center"><div>${ui.err?esc(ui.err):'Lade …'}</div></div>`; return; }
-  if(ui.phase==='denied'){ app.innerHTML=`<div class="center"><div class="card"><h2>Kein Zugriff</h2><p>${esc(ui.user&&ui.user.email||'')} ist für dieses Budget nicht freigeschaltet (Firestore-Regeln).</p><div class="actions"><button class="btn" data-act="logout">Mit anderem Konto anmelden</button></div></div></div>`; return; }
-  const body = ui.tab==='month'?viewMonth(): ui.tab==='entries'?viewEntries(): ui.tab==='lohn'?viewLohn(): ui.tab==='year'?viewYear(): viewMore();
-  const mode = backend&&backend.mode==='firebase' ? '<span class="pill ok">☁ synchronisiert</span>' : '<span class="pill">💾 lokal</span>';
-  app.innerHTML=`<header class="top"><h1>Haushaltsbudget</h1>${mode}</header>
-    <nav class="tabs">${TABS.map(([id,i,l])=>`<button class="${ui.tab===id?'on':''}" data-tab="${id}"><span class="i">${i}</span>${l}</button>`).join('')}</nav>${body}`;
-}
-function renderLogin(app){
-  app.innerHTML=`<div class="center"><div style="font-size:44px">💶</div><h1 style="margin:0">Haushaltsbudget</h1><div class="card"><h2>Anmelden</h2><p>Die Daten sind privat und nur für freigeschaltete Konten sichtbar.</p><div class="actions"><button class="btn grow" data-act="login">Mit Google anmelden</button></div>${ui.err?`<div class="err">${esc(ui.err)}</div>`:''}<div class="actions" style="margin-top:14px"><button class="btn sec sm" data-act="to-local">Lokal testen (ohne Anmeldung)</button><button class="btn sec sm" data-act="reset-config">Konfiguration ändern</button></div></div></div>`;
-}
-function renderSetup(app){
-  app.innerHTML=`<div class="center"><div style="font-size:44px">💶</div><h1 style="margin:0">Haushaltsbudget</h1><div class="card"><h2>Firebase verbinden</h2>
-  <p style="margin-top:0">Die App-ID ist schon hinterlegt. Es fehlen noch <code>apiKey</code> und <code>projectId</code>. In der Firebase-Konsole: Projekteinstellungen → Allgemein → Deine Apps → SDK-Konfiguration. Den ganzen <code>firebaseConfig</code>-Block hier einfügen:</p>
-  <textarea id="cfgtxt" placeholder='const firebaseConfig = {\n  apiKey: "…",\n  authDomain: "…firebaseapp.com",\n  projectId: "…",\n  …\n};'></textarea>
-  ${ui.err?`<div class="err">${esc(ui.err)}</div>`:''}
-  <div class="actions"><button class="btn" data-act="save-config">Verbinden</button><button class="btn sec" data-act="to-local">Erst lokal testen</button></div></div></div>`;
-}
 
 /* ============ Eintrag bearbeiten ============ */
 function openEntry(id){
@@ -648,63 +944,7 @@ async function saveLohn(k,p,val){
   },200);
 }
 
-/* ============ Ereignisse ============ */
-document.addEventListener('click', async ev=>{
-  const t=ev.target.closest('[data-tab],[data-scope],[data-mshift],[data-yshift],[data-yview],[data-edit],[data-act],[data-refreeze],[data-delcat]');
-  if(!t){ if(ev.target.id==='modal') closeModal(); return; }
-  const d=t.dataset;
-  if(d.tab){ ui.tab=d.tab; render(); window.scrollTo(0,0); }
-  else if(d.scope){ ui.scope=d.scope; lsSet('budget_scope',d.scope); render(); }
-  else if(d.mshift){ ui.key+=+d.mshift; ui.year=ymOf(ui.key).y; render(); }
-  else if(d.yshift){ ui.year+=+d.yshift; render(); }
-  else if(d.yview){ ui.yview=d.yview; render(); }
-  else if(d.edit){ openEntry(d.edit); }
-  else if(d.refreeze){ await refreezeMonth(+d.refreeze); }
-  else if(d.delcat){ const next=cats().filter(c=>c!==d.delcat); await backend.set('settings','main',{...S.settings,kats:next}); }
-  else if(d.act){
-    const a=d.act;
-    if(a==='add') openEntry(null);
-    else if(a==='seed') await seedData();
-    else if(a==='export') exportData();
-    else if(a==='login'){ try{ ui.err=''; await backend.signIn(); }catch(e){ ui.err='Anmeldung fehlgeschlagen: '+(e.code||e.message); render(); } }
-    else if(a==='logout'){ await backend.signOut(); ui.phase='login'; ready=false; render(); }
-    else if(a==='to-local'){ lsSet('budget_mode','local'); location.reload(); }
-    else if(a==='to-firebase'){ lsDel('budget_mode'); location.reload(); }
-    else if(a==='reset-config'){ lsDel('budget_fbconfig'); lsDel('budget_mode'); ui.phase='setup'; ui.err=''; render(); }
-    else if(a==='save-config'){
-      const txt=$('#cfgtxt').value; const cfg={...FIREBASE_CONFIG};
-      for(const m of txt.matchAll(/["']?(\w+)["']?\s*:\s*["']([^"']*)["']/g)) cfg[m[1]]=m[2];
-      if(!cfg.apiKey||!cfg.projectId){ ui.err='apiKey und projectId fehlen noch im eingefügten Text.'; render(); return; }
-      if(!cfg.authDomain) cfg.authDomain=cfg.projectId+'.firebaseapp.com';
-      lsSet('budget_fbconfig',JSON.stringify(cfg)); lsDel('budget_mode'); location.reload();
-    }
-  }
-});
-document.addEventListener('change', async ev=>{
-  const t=ev.target;
-  if(t.matches('[data-mpick]')){ const k=fromInput(t.value); if(k){ ui.key=k; ui.year=ymOf(k).y; render(); } }
-  else if(t.matches('[data-filter]')){ ui.filterKat=t.value; render(); }
-  else if(t.matches('[data-only]')){ ui.onlyActive=t.checked; render(); }
-  else if(t.matches('[data-import]')){ if(t.files[0]) await importData(t.files[0]); t.value=''; }
-  else if(t.matches('input[data-lohn]')){ const v=t.value===''?'':parseFloat(t.value); await saveLohn(+t.dataset.lohn,t.dataset.p,v); }
-});
-document.addEventListener('submit', async ev=>{
-  if(ev.target.matches('[data-addcat]')){
-    ev.preventDefault(); const c=ev.target.c.value.trim(); if(!c) return;
-    if(cats().includes(c)){ toast('Gibt es schon'); return; }
-    await backend.set('settings','main',{...S.settings,kats:[...cats(),c]});
-  }
-});
-document.addEventListener('keydown', ev=>{ if(ev.key==='Escape') closeModal(); });
 
-/* ============ Start ============ */
-function onData(d){
-  S=d;
-  const a=document.activeElement;
-  if(a && a.matches && a.matches('input[data-lohn]')){ clearTimeout(onData.t); onData.t=setTimeout(render,600); return; }
-  if(ui.phase==='loading') ui.phase='app';
-  render();
-}
 async function startBackend(){
   backend.onReady=async()=>{ ready=true; ui.phase='app'; await autoFreeze(); render(); };
   await backend.start(onData, err=>{
