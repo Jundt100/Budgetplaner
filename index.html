@@ -1,686 +1,737 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#0f172a">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Budget & Finanz-Simulator PWA</title>
-  <!-- Tailwind CSS via CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Chart.js via CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: #f8fafc;
-    }
-    input[type="range"] {
-      accent-color: #2563eb;
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#4E9A3A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Budget">
+<title>Haushaltsbudget</title>
+<style>
+:root{
+  --bg:#f3f6f1; --card:#fff; --text:#1c2819; --muted:#68775f; --line:#e1e8dc; --brand:#4E9A3A; --brand-d:#3d7c2d;
+  --nic:#2E75B6; --van:#C55A11; --ein:#fff3cf; --mon:#e6f4df; --ste:#fde9dc; --spa:#cfeec1; --red:#c0392b; --shadow:0 1px 2px rgba(20,40,10,.06),0 4px 14px rgba(20,40,10,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#10150f;--card:#192018;--text:#e7efe3;--muted:#98a893;--line:#2a3427;--brand:#62b24d;--brand-d:#4E9A3A;--nic:#5aa2e0;--van:#e8864a;--ein:#3a3317;--mon:#1f3319;--ste:#3a2a1c;--spa:#24451c;--shadow:none}
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+#app{max-width:1000px;margin:0 auto;padding:0 14px calc(86px + env(safe-area-inset-bottom))}
+header.top{display:flex;align-items:center;gap:10px;padding:max(12px,env(safe-area-inset-top)) 0 8px}
+header.top h1{font-size:19px;margin:0;flex:1;letter-spacing:-.01em}
+.pill{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--card);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pill.ok{color:var(--brand)}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:20}
+nav.tabs button{flex:1;border:0;background:none;padding:6px 2px;border-radius:10px;color:var(--muted);font-size:11px;display:flex;flex-direction:column;align-items:center;gap:2px}
+nav.tabs button .i{font-size:19px;line-height:1}
+nav.tabs button.on{color:var(--brand);font-weight:600}
+@media (min-width:820px){
+  #app{padding-bottom:40px}
+  nav.tabs{position:static;border:0;background:none;padding:0;margin:0 0 6px;gap:4px}
+  nav.tabs button{flex:none;flex-direction:row;gap:7px;padding:8px 14px;font-size:14px;border-radius:99px}
+  nav.tabs button.on{background:var(--card);box-shadow:var(--shadow)}
+}
+.bar{display:flex;align-items:center;gap:8px;margin:6px 0 12px;flex-wrap:wrap}
+.bar .grow{flex:1}
+.mnav{display:flex;align-items:center;background:var(--card);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.mnav button{border:0;background:none;padding:10px 14px;font-size:18px;color:var(--brand)}
+.mnav .lab{position:relative;min-width:150px;text-align:center;font-weight:650;font-size:16px}
+.mnav .lab input{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}
+.seg{display:inline-flex;background:var(--card);border-radius:12px;padding:3px;box-shadow:var(--shadow)}
+.seg button{border:0;background:none;padding:7px 12px;border-radius:9px;font-size:13px;color:var(--muted)}
+.seg button.on{background:var(--brand);color:#fff;font-weight:600}
+.seg button.on.nj{background:var(--nic)} .seg button.on.vs{background:var(--van)}
+.card{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:14px;margin-bottom:12px}
+.card h2{font-size:13px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:650}
+.grid{display:grid;gap:12px}
+@media (min-width:820px){.grid.two{grid-template-columns:1fr 1fr;align-items:start}}
+.kv{display:flex;justify-content:space-between;align-items:center;padding:11px 12px;border-radius:11px;margin-bottom:6px;gap:10px}
+.kv .l{font-weight:550}
+.kv .v{font-variant-numeric:tabular-nums;font-weight:650;white-space:nowrap}
+.kv.ein{background:var(--ein)} .kv.mon,.kv.einm{background:var(--mon)} .kv.steuer{background:var(--ste)} .kv.spar{background:var(--spa);font-size:17px}
+.kv small{display:block;color:var(--muted);font-weight:400;font-size:12px}
+.neg{color:var(--red)}
+.quote{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;padding:2px 4px}
+.sub3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px}
+.sub3 div{text-align:center;background:var(--bg);border-radius:10px;padding:8px 4px;font-size:12px;color:var(--muted)}
+.sub3 b{display:block;font-size:14px;color:var(--text)}
+.sub3 .n b{color:var(--nic)} .sub3 .v b{color:var(--van)}
+.bars .row{display:grid;grid-template-columns:130px 1fr 86px;gap:8px;align-items:center;padding:4px 0;font-size:14px}
+.bars .track{height:10px;background:var(--bg);border-radius:6px;overflow:hidden;display:flex}
+.bars .track i{display:block;height:100%}
+.bars .amt{text-align:right;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:8px;flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.list .grp{margin:14px 2px 6px;display:flex;justify-content:space-between;font-weight:650;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.item{display:flex;align-items:center;gap:10px;background:var(--card);padding:11px 12px;border-radius:12px;margin-bottom:6px;box-shadow:var(--shadow);cursor:pointer;border-left:4px solid var(--line)}
+.item.a-Monatlich{border-left-color:var(--brand)} .item.a-Einmalig{border-left-color:var(--nic)} .item.a-Jährlich{border-left-color:#ED7D31} .item.a-Lohn{border-left-color:#FFC000}
+.item.off{opacity:.5}
+.item .m{flex:1;min-width:0}
+.item .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .s{font-size:12px;color:var(--muted)}
+.item .a{text-align:right;font-variant-numeric:tabular-nums;font-weight:650;white-space:nowrap}
+.item .a small{display:block;font-weight:400;color:var(--muted);font-size:11px}
+.who{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:99px;color:#fff;margin-right:4px}
+.who.NJ{background:var(--nic)} .who.VS{background:var(--van)} .who.b{background:var(--muted)}
+.fab{position:fixed;right:18px;bottom:calc(78px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:50%;border:0;background:var(--brand);color:#fff;font-size:30px;box-shadow:0 6px 18px rgba(0,0,0,.25);z-index:15}
+@media (min-width:820px){.fab{bottom:28px}}
+.btn{border:0;background:var(--brand);color:#fff;padding:10px 16px;border-radius:11px;font-weight:600}
+.btn.sec{background:var(--card);color:var(--text);border:1px solid var(--line)}
+.btn.danger{background:var(--red)}
+.btn.sm{padding:6px 11px;font-size:13px}
+.btn[disabled]{opacity:.5}
+table.t{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+table.t th,table.t td{padding:7px 4px;text-align:right;border-bottom:1px solid var(--line)}
+table.t th:first-child,table.t td:first-child{text-align:left}
+table.t th{font-size:11px;color:var(--muted);font-weight:650;text-transform:uppercase;letter-spacing:.04em}
+table.t tr.cur td{background:var(--ein);font-weight:650}
+table.t tr.tot td{font-weight:700;border-top:2px solid var(--line)}
+table.t tr.fut td{color:var(--muted)}
+.scroll{overflow-x:auto}
+svg.chart{width:100%;height:auto;display:block}
+svg.chart text{fill:var(--muted);font-size:10px}
+svg.chart line{stroke:var(--line)}
+.lohn-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.lohn-row.cur{background:var(--ein);margin:0 -14px;padding:6px 14px}
+.lohn-row input{width:100%;padding:8px;border:1px solid var(--line);border-radius:9px;background:var(--bg);text-align:right;font-variant-numeric:tabular-nums}
+.lohn-row input::placeholder{color:var(--muted);opacity:.7}
+.lohn-row .mo{font-weight:600;font-size:14px}
+.lohn-head{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:.05em;padding-bottom:6px}
+.lohn-head span:nth-child(n+2){text-align:right;padding-right:8px}
+#modal{position:fixed;inset:0;display:none;background:rgba(0,0,0,.45);z-index:50;align-items:flex-end;justify-content:center}
+#modal.on{display:flex}
+.sheet{background:var(--card);width:100%;max-width:520px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom))}
+@media (min-width:600px){#modal{align-items:center}.sheet{border-radius:20px}}
+.sheet h3{margin:0 0 12px;font-size:18px}
+label.f{display:block;margin-bottom:11px;font-size:12px;font-weight:650;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+label.f input,label.f select{display:block;width:100%;margin-top:4px;padding:10px 11px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-size:16px;text-transform:none;letter-spacing:0;font-weight:400;color:var(--text)}
+.two-c{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.actions .grow{flex:1}
+.err{color:var(--red);font-size:13px;margin:4px 0}
+.hint{font-size:12px;color:var(--muted);margin:2px 0 8px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom));background:#222;color:#fff;padding:9px 16px;border-radius:99px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:99}
+#toast.on{opacity:.95}
+.center{min-height:80vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:14px;padding:20px}
+.center .card{max-width:520px;width:100%;text-align:left}
+textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:10px;font:12px/1.4 ui-monospace,Menlo,monospace}
+details summary{cursor:pointer;font-weight:600;padding:6px 0}
+.empty{text-align:center;color:var(--muted);padding:26px 10px}
+code{background:var(--bg);padding:1px 5px;border-radius:5px;font-size:12px}
+.frozen{display:inline-block;font-size:11px;background:#dbeafe;color:#1d4ed8;border-radius:99px;padding:1px 8px;margin-left:6px}
+</style>
 </head>
-<body class="text-slate-800 pb-24">
+<body>
+<div id="app"></div>
+<div id="modal"></div>
+<div id="toast"></div>
+<noscript>Diese Seite braucht JavaScript.</noscript>
+<script type="module">
+/* ============ KONFIGURATION ============
+   Firebase: App-ID ist eingetragen. apiKey, authDomain und projectId findest du in der
+   Firebase-Konsole unter Projekteinstellungen -> Allgemein -> «Deine Apps» -> SDK-Konfiguration.
+   Entweder hier eintragen oder beim ersten Start in der App einfügen. */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDHD7OQgqs6TsbeYqkVrZ-iBn98yN5If3A",
+  authDomain: "budgetplan-eb4db.firebaseapp.com",
+  projectId: "budgetplan-eb4db",
+  storageBucket: "budgetplan-eb4db.firebasestorage.app",
+  messagingSenderId: "893738306079",
+  appId: "1:893738306079:web:0c2e0219bb9e579465632a"
+};
+const HOUSEHOLD = 'main';
+const CATS_DEFAULT = ['Wohnung','Auto','Versicherung / KK','Einkaufen / Freizeit','Abos / Multimedia','Steuern','Sparen / Vorsorge','Sonstiges','Altbestand'];
+const SEED = {"entries": [{"art": "Monatlich", "kat": "Wohnung", "name": "Miete", "betrag": 1750, "wer": "50/50", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Wohnung", "name": "Nebenkosten", "betrag": 250, "wer": "50/50", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Wohnung", "name": "Parkplatz Unterstand", "betrag": 80, "wer": "50/50", "ab": 24322, "bis": null}, {"art": "Jährlich", "kat": "Wohnung", "name": "Strom", "betrag": 100, "wer": "50/50", "ab": 24322, "bis": null}, {"art": "Jährlich", "kat": "Wohnung", "name": "Wasser / Heizung", "betrag": 50, "wer": "50/50", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Auto", "name": "ÖV: UABO", "betrag": 85, "wer": "VS", "ab": 24322, "bis": null}, {"art": "Jährlich", "kat": "Versicherung / KK", "name": "Mobiliar Hausrat", "betrag": 44.6, "wer": "50/50", "ab": 24322, "bis": null}, {"art": "Jährlich", "kat": "Versicherung / KK", "name": "Rechtsschutz", "betrag": 22, "wer": "50/50", "ab": 24322, "bis": null}, {"art": "Jährlich", "kat": "Versicherung / KK", "name": "Krankenkasse NJ", "betrag": 458, "wer": "NJ", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Versicherung / KK", "name": "Krankenkasse VS", "betrag": 501, "wer": "VS", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Einkaufen / Freizeit", "name": "Einkaufen", "betrag": 900, "wer": "50/50", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Einkaufen / Freizeit", "name": "Mittagessen NJ", "betrag": 240, "wer": "NJ", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Einkaufen / Freizeit", "name": "Freizeit NJ", "betrag": 1000, "wer": "NJ", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Einkaufen / Freizeit", "name": "Freizeit VS", "betrag": 600, "wer": "VS", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Abos / Multimedia", "name": "Handy Abo Privat NJ", "betrag": 44.95, "wer": "NJ", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Abos / Multimedia", "name": "Handy Abo Geschäft NJ", "betrag": 25.95, "wer": "NJ", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Abos / Multimedia", "name": "Internet / TV", "betrag": 49.9, "wer": "NJ", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Abos / Multimedia", "name": "Handy Abo VS", "betrag": 35.95, "wer": "VS", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Abos / Multimedia", "name": "Handy Abbezahlen VS", "betrag": 106, "wer": "VS", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Abos / Multimedia", "name": "Netflix", "betrag": 43.7, "wer": "NJ", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Abos / Multimedia", "name": "Spotify", "betrag": 23, "wer": "NJ", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Abos / Multimedia", "name": "YouTube", "betrag": 17.5, "wer": "NJ", "ab": 24322, "bis": 24322}, {"art": "Monatlich", "kat": "Abos / Multimedia", "name": "NordPass", "betrag": 1.3, "wer": "NJ", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Abos / Multimedia", "name": "Microsoft Office", "betrag": 9.15, "wer": "NJ", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Abos / Multimedia", "name": "Adobe Creative Cloud", "betrag": 11.9, "wer": "NJ", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Abos / Multimedia", "name": "Amazon Prime Video", "betrag": 10.9, "wer": "VS", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Abos / Multimedia", "name": "Orell Füssli", "betrag": 14, "wer": "VS", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Abos / Multimedia", "name": "Google One", "betrag": 17, "wer": "NJ", "ab": 24322, "bis": null}, {"art": "Jährlich", "kat": "Abos / Multimedia", "name": "Shelly", "betrag": 2.8, "wer": "NJ", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Abos / Multimedia", "name": "Claude", "betrag": 17, "wer": "NJ", "ab": 24323, "bis": null}, {"art": "Jährlich", "kat": "Steuern", "name": "Steuern NJ (Jahresbetrag)", "betrag": 12000, "wer": "NJ", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Steuern", "name": "Steuern VS (Jahresbetrag)", "betrag": 12, "wer": "VS", "ab": 24322, "bis": null}, {"art": "Jährlich", "kat": "Steuern", "name": "Serafe (Jahresbetrag)", "betrag": 360, "wer": "50/50", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Sparen / Vorsorge", "name": "Mobiliar 3. Säule NJ", "betrag": 231.2, "wer": "NJ", "ab": 24322, "bis": null}, {"art": "Monatlich", "kat": "Sparen / Vorsorge", "name": "Mobiliar 3. Säule VS", "betrag": 114.5, "wer": "VS", "ab": 24322, "bis": null}, {"art": "Einmalig", "kat": "Sonstiges", "name": "Rückzahlung Fahrlehrer", "betrag": 1000, "wer": "VS", "ab": 24322, "bis": null}, {"art": "Einmalig", "kat": "Sonstiges", "name": "Strom", "betrag": 100, "wer": "VS", "ab": 24323, "bis": null}, {"art": "Monatlich", "kat": "Altbestand", "name": "Gesamtausgaben Nicola Juli–Okt (Altbestand)", "betrag": 3208.75, "wer": "NJ", "ab": 24319, "bis": 24322}, {"art": "Einmalig", "kat": "Altbestand", "name": "Gesamtausgaben Vanessa Juli (Altbestand)", "betrag": 4607.25, "wer": "VS", "ab": 24319, "bis": null}, {"art": "Einmalig", "kat": "Altbestand", "name": "Gesamtausgaben Vanessa August (Altbestand)", "betrag": 4780.3, "wer": "VS", "ab": 24320, "bis": null}, {"art": "Einmalig", "kat": "Altbestand", "name": "Gesamtausgaben Vanessa September (Altbestand)", "betrag": 4588.35, "wer": "VS", "ab": 24321, "bis": null}], "lohn": {"24319": {"n": 5351.55, "v": 4837}, "24320": {"n": 6370, "v": 4803}, "24321": {"n": null, "v": 4800}}};
 
-  <!-- Top Header / Status Bar -->
-  <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
-    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-      <div class="flex items-center space-x-2">
-        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-lg">CHF</div>
-        <div>
-          <h1 class="font-bold text-base sm:text-lg leading-tight">Haushaltsbudget & Simulator</h1>
-          <p class="text-xs text-slate-400">PWA Web-App • PC & Smartphone</p>
-        </div>
-      </div>
-      <div id="sync-badge" class="flex items-center space-x-1.5 bg-slate-800 border border-slate-700 px-3 py-1 rounded-full text-xs">
-        <span id="sync-dot" class="w-2 h-2 rounded-full bg-amber-400"></span>
-        <span id="sync-text">Lokal gespeichert (Browser)</span>
-      </div>
-    </div>
-  </header>
+/* ============ Hilfsfunktionen ============ */
+const $ = (s, r=document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MONTHS = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const MK = (y,m) => y*12+m;
+const ymOf = k => ({y:Math.floor((k-1)/12), m:(k-1)%12+1});
+const label = k => { const {y,m}=ymOf(k); return MONTHS[m-1]+' '+y; };
+const short = k => { const {y,m}=ymOf(k); return String(m).padStart(2,'0')+'.'+y; };
+const toInput = k => { if(k==null) return ''; const {y,m}=ymOf(k); return y+'-'+String(m).padStart(2,'0'); };
+const fromInput = s => { if(!s) return null; const [y,m]=s.split('-').map(Number); return MK(y,m); };
+const nowKey = () => { const d=new Date(); return MK(d.getFullYear(), d.getMonth()+1); };
+const fmt = n => (Math.round((n+Number.EPSILON)*100)/100).toLocaleString('de-CH',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt0 = n => Math.round(n).toLocaleString('de-CH');
+const chf = n => 'CHF ' + fmt(n);
+const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
+const lsGet = (k,d=null) => { try{ const v=localStorage.getItem(k); return v==null?d:v; }catch{ return d; } };
+const lsSet = (k,v) => { try{ localStorage.setItem(k,v); }catch{} };
+const lsDel = k => { try{ localStorage.removeItem(k); }catch{} };
+function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('on'); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove('on'),2200); }
 
-  <!-- Main Content Container -->
-  <main class="max-w-5xl mx-auto px-4 pt-5">
+/* ============ Daten-Schicht ============ */
+let S = {entries:[], lohn:{}, frozen:{}, settings:{}};
+let backend = null;
+let ready = false;
+const COLS = ['entries','lohn','frozen','settings'];
 
-    <!-- KPI Summary Cards (Always visible) -->
-    <section class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-        <p class="text-xs text-slate-500 uppercase font-semibold">Einnahmen / Mt.</p>
-        <p id="kpi-income" class="text-xl sm:text-2xl font-bold text-emerald-600 mt-1">0 CHF</p>
-      </div>
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-        <p class="text-xs text-slate-500 uppercase font-semibold">Fixkosten / Mt.</p>
-        <p id="kpi-fixed" class="text-xl sm:text-2xl font-bold text-slate-700 mt-1">0 CHF</p>
-      </div>
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-        <p class="text-xs text-slate-500 uppercase font-semibold">Variabel / Mt.</p>
-        <p id="kpi-variable" class="text-xl sm:text-2xl font-bold text-amber-600 mt-1">0 CHF</p>
-      </div>
-      <div class="bg-blue-600 text-white p-4 rounded-xl shadow-sm">
-        <p class="text-xs text-blue-100 uppercase font-semibold">Freies Sparpotenzial</p>
-        <p id="kpi-savings" class="text-xl sm:text-2xl font-bold mt-1">0 CHF</p>
-      </div>
-    </section>
+function LocalBackend(){
+  const KEY='budget_local_v1';
+  let data;
+  try{ data=JSON.parse(lsGet(KEY,'')||'null'); }catch{ data=null; }
+  data = data || {entries:{},lohn:{},frozen:{},settings:{}};
+  const save = () => lsSet(KEY, JSON.stringify(data));
+  const emit = () => b.onData({
+    entries:Object.entries(data.entries).map(([id,o])=>({...o,id})),
+    lohn:{...data.lohn}, frozen:{...data.frozen}, settings:data.settings.main||{}
+  });
+  const b = {
+    mode:'local',
+    async start(onData){ b.onData=onData; emit(); b.onReady(); },
+    async set(col,id,obj){ data[col][id]=obj; save(); emit(); },
+    async del(col,id){ delete data[col][id]; save(); emit(); },
+    async batch(ops){ for(const op of ops){ if(op.del) delete data[op.col][op.id]; else data[op.col][op.id]=op.obj; } save(); emit(); },
+    async signOut(){},
+  };
+  return b;
+}
 
-    <!-- Navigation Tabs -->
-    <div class="flex space-x-2 bg-slate-200/80 p-1 rounded-xl mb-6">
-      <button onclick="switchTab('budget')" id="tab-btn-budget" class="flex-1 py-2.5 text-sm font-semibold rounded-lg bg-white text-slate-900 shadow-sm transition">
-        📊 1. Budgetplan
-      </button>
-      <button onclick="switchTab('sim')" id="tab-btn-sim" class="flex-1 py-2.5 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition">
-        🎛️ 2. Live-Simulation
-      </button>
-      <button onclick="switchTab('cloud')" id="tab-btn-cloud" class="flex-1 py-2.5 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition">
-        ☁️ 3. Cloud & Backup
-      </button>
-    </div>
+async function FirebaseBackend(cfg){
+  const base='https://www.gstatic.com/firebasejs/10.12.2/';
+  const [{initializeApp}, A, F] = await Promise.all([import(base+'firebase-app.js'), import(base+'firebase-auth.js'), import(base+'firebase-firestore.js')]);
+  const app = initializeApp(cfg);
+  const auth = A.getAuth(app);
+  let db;
+  try{ db = F.initializeFirestore(app,{localCache:F.persistentLocalCache({tabManager:F.persistentMultipleTabManager()})}); }
+  catch{ db = F.getFirestore(app); }
+  const cache = {entries:{},lohn:{},frozen:{},settings:{}};
+  const loaded = {};
+  const emit = () => b.onData({
+    entries:Object.entries(cache.entries).map(([id,o])=>({...o,id})),
+    lohn:{...cache.lohn}, frozen:{...cache.frozen}, settings:cache.settings.main||{}
+  });
+  const ref = (col,id) => F.doc(db,'households',HOUSEHOLD,col,id);
+  const clean = o => JSON.parse(JSON.stringify(o));
+  let unsubs=[];
+  const b = {
+    mode:'firebase', user:null,
+    onAuth(cb){ A.onAuthStateChanged(auth, u => { b.user=u; cb(u); }); },
+    async signIn(){
+      const p = new A.GoogleAuthProvider(); p.setCustomParameters({prompt:'select_account'});
+      try{ await A.signInWithPopup(auth,p); }
+      catch(e){ if(['auth/popup-blocked','auth/operation-not-supported-in-this-environment'].includes(e.code)) await A.signInWithRedirect(auth,p); else throw e; }
+    },
+    async signOut(){ unsubs.forEach(u=>u()); unsubs=[]; await A.signOut(auth); },
+    async start(onData,onError){
+      b.onData=onData;
+      for(const col of COLS){
+        unsubs.push(F.onSnapshot(F.collection(db,'households',HOUSEHOLD,col), snap=>{
+          snap.docChanges().forEach(ch=>{ if(ch.type==='removed') delete cache[col][ch.doc.id]; else cache[col][ch.doc.id]=ch.doc.data(); });
+          loaded[col]=true; emit();
+          if(COLS.every(c=>loaded[c])) b.onReady();
+        }, err=>onError&&onError(err)));
+      }
+    },
+    async set(col,id,obj){ await F.setDoc(ref(col,id), clean(obj)); },
+    async del(col,id){ await F.deleteDoc(ref(col,id)); },
+    async batch(ops){
+      for(let i=0;i<ops.length;i+=400){
+        const wb=F.writeBatch(db);
+        ops.slice(i,i+400).forEach(op=>op.del?wb.delete(ref(op.col,op.id)):wb.set(ref(op.col,op.id),clean(op.obj)));
+        await wb.commit();
+      }
+    },
+  };
+  return b;
+}
 
-    <!-- TAB 1: BUDGETPLAN -->
-    <div id="tab-budget" class="space-y-6">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <!-- Form to Add Entry -->
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 lg:col-span-1 h-fit">
-          <h2 class="font-bold text-base mb-4">Neuen Posten hinzufügen</h2>
-          <form id="budget-form" onsubmit="addEntry(event)" class="space-y-3">
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Bezeichnung</label>
-              <input type="text" id="entry-name" required placeholder="z.B. Miete, Einkauf, Lohn..." class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Betrag (CHF)</label>
-                <input type="number" id="entry-amount" required min="1" step="1" placeholder="150" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              </div>
-              <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Kategorie</label>
-                <select id="entry-type" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="income">Einnahme (+)</option>
-                  <option value="fixed" selected>Fixkosten (-)</option>
-                  <option value="variable">Variabel (-)</option>
-                </select>
-              </div>
-            </div>
-            <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 rounded-lg text-sm transition mt-2">
-              + Im Budget speichern
-            </button>
-          </form>
+/* ============ Rechenlogik (wie in der Excel-Datei) ============ */
+const shares = w => ({n: w==='NJ'?1:w==='50/50'?.5:0, v: w==='VS'?1:w==='50/50'?.5:0});
+const cats = () => (S.settings.kats && S.settings.kats.length) ? S.settings.kats : CATS_DEFAULT;
+function isActive(e,k){
+  if(e.ab==null) return false;
+  const end = e.art==='Einmalig' ? e.ab : (e.bis==null ? Infinity : e.bis);
+  return e.ab<=k && k<=end;
+}
+function status(e,k){
+  if(e.ab==null) return 'off';
+  if(isActive(e,k)) return 'on';
+  const end = e.art==='Einmalig' ? e.ab : (e.bis==null ? Infinity : e.bis);
+  return end<k ? 'past' : 'future';
+}
+function monthlyAmount(e){ return e.art==='Jährlich' ? e.betrag/12 : e.betrag; }
+function liveItems(k){
+  return S.entries.filter(e=>isActive(e,k)).map(e=>{
+    const m=monthlyAmount(e), s=shares(e.wer);
+    return {id:e.id, art:e.art, kat:e.art==='Lohn'?'Lohn':e.kat, name:e.name, betrag:e.betrag, wer:e.wer, n:m*s.n, v:m*s.v};
+  });
+}
+function lohnBase(k){
+  let n=0,v=0,kn=-1,kv=-1;
+  for(const [kk,o] of Object.entries(S.lohn)){
+    const key=+kk; if(key>k) continue;
+    if(o.n!=null && o.n!=='' && key>kn){ kn=key; n=+o.n; }
+    if(o.v!=null && o.v!=='' && key>kv){ kv=key; v=+o.v; }
+  }
+  return {n,v};
+}
+function monthData(k){
+  if(S.frozen[k]) return {...S.frozen[k], frozen:true};
+  const l=lohnBase(k);
+  return {key:k, items:liveItems(k), lohnN:l.n, lohnV:l.v, frozen:false};
+}
+function calc(md){
+  const z=()=>({ein:0,mon:0,einm:0,steuer:0,spar:0});
+  const N=z(), V=z(), cat={};
+  N.ein=md.lohnN||0; V.ein=md.lohnV||0;
+  for(const it of md.items){
+    if(it.art==='Lohn'){ N.ein+=it.n; V.ein+=it.v; continue; }
+    const f = it.art==='Monatlich'?'mon':it.art==='Einmalig'?'einm':'steuer';
+    N[f]+=it.n; V[f]+=it.v;
+    const c=(cat[it.kat]=cat[it.kat]||{n:0,v:0}); c.n+=it.n; c.v+=it.v;
+  }
+  for(const P of [N,V]) P.spar=P.ein-P.mon-P.einm-P.steuer;
+  const H={}; for(const f of ['ein','mon','einm','steuer','spar']) H[f]=N[f]+V[f];
+  return {N,V,H,cat};
+}
+function firstKey(){
+  const ks=[...S.entries.filter(e=>e.ab!=null).map(e=>e.ab), ...Object.keys(S.lohn).map(Number)];
+  return ks.length ? Math.min(...ks) : null;
+}
+/* Vergangene Monate werden automatisch eingefroren: spaetere Aenderungen/Loeschungen aendern sie nicht mehr. */
+async function autoFreeze(){
+  if(!ready || !backend) return;
+  const f=firstKey(); if(f==null) return;
+  const cur=nowKey(); const ops=[];
+  for(let k=f;k<cur;k++){
+    if(S.frozen[k]) continue;
+    const l=lohnBase(k);
+    ops.push({col:'frozen', id:String(k), obj:{key:k, items:liveItems(k), lohnN:l.n, lohnV:l.v, at:Date.now()}});
+  }
+  if(ops.length){
+    ops.forEach(o=>S.frozen[o.id]=o.obj);   // sofort lokal, damit nichts dazwischenkommt
+    await backend.batch(ops);
+  }
+}
 
-          <!-- Mini Donut Chart -->
-          <div class="mt-6 pt-5 border-t border-slate-100">
-            <h3 class="text-xs font-semibold text-slate-500 uppercase mb-3">Aufteilung der Einnahmen</h3>
-            <div class="h-48 flex items-center justify-center">
-              <canvas id="budgetDonutChart"></canvas>
-            </div>
-          </div>
-        </div>
+/* ============ UI-Zustand ============ */
+const ui = {
+  tab:'month', key:nowKey(), scope:lsGet('budget_scope','all'), year:new Date().getFullYear(),
+  yview:'year', filterKat:'', onlyActive:true, user:null, phase:'boot', err:''
+};
+const scopeLabel = {all:'Haushalt', NJ:'Nicola', VS:'Vanessa'};
+const pick = (c,scope) => scope==='NJ'?c.N : scope==='VS'?c.V : c.H;
+const itemAmt = (it,scope) => scope==='NJ'?it.n : scope==='VS'?it.v : it.n+it.v;
 
-        <!-- Budget Items List -->
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 lg:col-span-2">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="font-bold text-base">Monatliche Budget-Posten</h2>
-            <span class="text-xs text-slate-400">Beträge direkt in der Liste änderbar</span>
-          </div>
-          
-          <div id="entries-container" class="space-y-2">
-            <!-- Dynamically populated -->
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- TAB 2: INTERAKTIVE SIMULATION -->
-    <div id="tab-sim" class="hidden space-y-6">
-      <div class="bg-gradient-to-r from-blue-900 to-slate-900 text-white p-5 rounded-2xl shadow-sm">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <span class="text-xs uppercase tracking-wider bg-blue-500/30 text-blue-200 px-2.5 py-1 rounded-full font-semibold">Was-wäre-wenn-Rechner</span>
-            <h2 class="text-lg sm:text-xl font-bold mt-2">Vermögens- & Projekt-Simulator</h2>
-            <p class="text-xs sm:text-sm text-slate-300 mt-0.5">Bewege die Regler, um in Echtzeit zu testen, wie sich Sparrate, Rendite oder grössere Anschaffungen auswirken.</p>
-          </div>
-          <button onclick="resetSimulationToBudget()" class="shrink-0 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition">
-            🔄 Auf aktuelles Budget zurücksetzen
-          </button>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        <!-- Sliders Panel -->
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 lg:col-span-5 space-y-4">
-          
-          <div>
-            <div class="flex justify-between text-xs font-semibold mb-1">
-              <span class="text-slate-600">Startkapital heute</span>
-              <span id="lbl-sim-initial" class="text-slate-900 font-bold">15'000 CHF</span>
-            </div>
-            <input type="range" id="sim-initial" min="0" max="150000" step="1000" value="15000" oninput="updateSimulation()" class="w-full">
-          </div>
-
-          <div>
-            <div class="flex justify-between text-xs font-semibold mb-1">
-              <span class="text-slate-600">Zusätzlich Sparen / Variable Kosten senken</span>
-              <span id="lbl-sim-extra" class="text-blue-600 font-bold">+0 CHF / Mt.</span>
-            </div>
-            <input type="range" id="sim-extra" min="-1000" max="2000" step="50" value="0" oninput="updateSimulation()" class="w-full">
-            <p class="text-[11px] text-slate-400 mt-0.5">Basis-Sparpotenzial aus Tab 1: <strong id="sim-base-savings">0 CHF</strong>/Mt.</p>
-          </div>
-
-          <div class="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
-            <div>
-              <div class="flex justify-between text-xs font-semibold mb-1">
-                <span class="text-slate-600">Rendite / Zins p.a.</span>
-                <span id="lbl-sim-return" class="text-emerald-600 font-bold">5.0 %</span>
-              </div>
-              <input type="range" id="sim-return" min="0" max="12" step="0.5" value="5.0" oninput="updateSimulation()" class="w-full">
-            </div>
-
-            <div>
-              <div class="flex justify-between text-xs font-semibold mb-1">
-                <span class="text-slate-600">Inflation p.a.</span>
-                <span id="lbl-sim-inflation" class="text-amber-600 font-bold">1.5 %</span>
-              </div>
-              <input type="range" id="sim-inflation" min="0" max="6" step="0.2" value="1.5" oninput="updateSimulation()" class="w-full">
-            </div>
-          </div>
-
-          <div>
-            <div class="flex justify-between text-xs font-semibold mb-1">
-              <span class="text-slate-600">Zeithorizont (Jahre)</span>
-              <span id="lbl-sim-years" class="text-slate-900 font-bold">10 Jahre</span>
-            </div>
-            <input type="range" id="sim-years" min="3" max="30" step="1" value="10" oninput="updateSimulation()" class="w-full">
-          </div>
-
-          <!-- Special Expense / Event Simulator -->
-          <div class="pt-3 border-t border-slate-200 bg-slate-50 -mx-5 -mb-5 p-5 rounded-b-2xl">
-            <h3 class="text-xs font-bold uppercase text-slate-700 mb-3">🎯 Geplantes Grossprojekt / Anschaffung</h3>
-            <div class="space-y-3">
-              <div>
-                <div class="flex justify-between text-xs font-semibold mb-1">
-                  <span class="text-slate-600">Geplante Ausgaben (z.B. Fest, Auto, Reise)</span>
-                  <span id="lbl-sim-event-cost" class="text-rose-600 font-bold">15'000 CHF</span>
-                </div>
-                <input type="range" id="sim-event-cost" min="0" max="60000" step="1000" value="15000" oninput="updateSimulation()" class="w-full">
-              </div>
-              <div>
-                <div class="flex justify-between text-xs font-semibold mb-1">
-                  <span class="text-slate-600">Findet statt in Jahr</span>
-                  <span id="lbl-sim-event-year" class="text-slate-900 font-bold">Jahr 1</span>
-                </div>
-                <input type="range" id="sim-event-year" min="1" max="10" step="1" value="1" oninput="updateSimulation()" class="w-full">
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- Simulation Output & Chart -->
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 lg:col-span-7 flex flex-col justify-between">
-          <div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-              <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                <p class="text-[11px] text-slate-500 uppercase font-semibold">Simulierte Sparrate</p>
-                <p id="sim-out-monthly" class="text-lg font-bold text-blue-600 mt-0.5">0 CHF / Mt.</p>
-              </div>
-              <div class="bg-emerald-50/70 p-3.5 rounded-xl border border-emerald-200">
-                <p class="text-[11px] text-emerald-700 uppercase font-semibold">Endvermögen (Nominal)</p>
-                <p id="sim-out-nominal" class="text-lg font-bold text-emerald-700 mt-0.5">0 CHF</p>
-              </div>
-              <div class="bg-indigo-50/70 p-3.5 rounded-xl border border-indigo-200">
-                <p class="text-[11px] text-indigo-700 uppercase font-semibold">Kaufkraft (Inflationsber.)</p>
-                <p id="sim-out-real" class="text-lg font-bold text-indigo-700 mt-0.5">0 CHF</p>
-              </div>
-            </div>
-
-            <div class="h-72 sm:h-80 w-full">
-              <canvas id="simLineChart"></canvas>
-            </div>
-          </div>
-
-          <p id="sim-summary-text" class="text-xs text-slate-500 mt-4 pt-3 border-t border-slate-100"></p>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- TAB 3: CLOUD & BACKUP (FIREBASE READY) -->
-    <div id="tab-cloud" class="hidden space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        <!-- Firebase Setup Box -->
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-          <div class="flex items-center space-x-2">
-            <span class="text-xl">🔥</span>
-            <h2 class="font-bold text-base">Echtzeit-Sync mit Google Firebase verbinden</h2>
-          </div>
-          <p class="text-xs text-slate-600 leading-relaxed">
-            Aktuell speichert diese App alle Änderungen sofort lokal auf diesem Gerät (<code class="bg-slate-100 px-1 py-0.5 rounded">localStorage</code>). Wenn du deinen <strong>Firebase-Schlüssel</strong> hier einfügst, synchronisiert die App live zwischen PC und Smartphone.
-          </p>
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Firebase Konfiguration (JSON) oder Datenbank-URL</label>
-            <textarea id="firebase-config-input" rows="5" placeholder='{"apiKey": "...", "projectId": "mein-budget", ...}' class="w-full p-3 rounded-lg border border-slate-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-          </div>
-          <div class="flex space-x-2">
-            <button onclick="saveFirebaseConfig()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg text-xs transition">
-              Konfiguration speichern
-            </button>
-            <button onclick="resetDemoData()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-4 py-2 rounded-lg text-xs transition">
-              Beispiel-Daten wiederherstellen
-            </button>
-          </div>
-        </div>
-
-        <!-- Export / Import Backup Box -->
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-          <div class="flex items-center space-x-2">
-            <span class="text-xl">💾</span>
-            <h2 class="font-bold text-base">Manuelles Daten-Backup (JSON Export / Import)</h2>
-          </div>
-          <p class="text-xs text-slate-600 leading-relaxed">
-            Auch ohne Cloud kannst du deinen gesamten Budgetplan jederzeit als kleine Datei herunterladen, sichern oder auf ein anderes Gerät übertragen.
-          </p>
-          <div class="flex flex-col sm:flex-row gap-3 pt-2">
-            <button onclick="exportBudgetJSON()" class="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-4 rounded-lg text-xs transition text-center">
-              ⬇️ Budget-Daten herunterladen (.json)
-            </button>
-            <label class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold py-2.5 px-4 rounded-lg text-xs transition text-center cursor-pointer border border-slate-300">
-              ⬆️ Backup-Datei einlesen
-              <input type="file" accept=".json" onchange="importBudgetJSON(event)" class="hidden">
-            </label>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-  </main>
-
-  <script>
-    // --- 1. STANDARD-STARTDATEN (Falls noch nichts gespeichert wurde) ---
-    const DEFAULT_BUDGET = [
-      { id: 1, name: "Nettoeinkommen Haushalt", amount: 7200, type: "income" },
-      { id: 2, name: "Miete & Nebenkosten", amount: 1850, type: "fixed" },
-      { id: 3, name: "Krankenkassen & Versicherungen", amount: 780, type: "fixed" },
-      { id: 4, name: "Strom, Internet & Handy", amount: 210, type: "fixed" },
-      { id: 5, name: "Mobilität & Strom/Tanken", amount: 320, type: "fixed" },
-      { id: 6, name: "Lebensmittel & Haushalt", amount: 950, type: "variable" },
-      { id: 7, name: "Freizeit, Ausflüge & Hobbys", amount: 650, type: "variable" },
-      { id: 8, name: "Rückstellungen (Steuern / Ferien)", amount: 850, type: "fixed" }
-    ];
-
-    let budgetEntries = [];
-    let donutChart = null;
-    let simChart = null;
-
-    // --- 2. INITIALISIERUNG BEIM START ---
-    window.addEventListener("DOMContentLoaded", () => {
-      loadFromStorage();
-      renderBudgetList();
-      updateSimulation();
+/* ============ Diagramm ============ */
+function niceStep(x){ const p=Math.pow(10,Math.floor(Math.log10(x))); const f=x/p; return (f<=1?1:f<=2?2:f<=5?5:10)*p; }
+function chart(labels, series){
+  const W=640,H=200,pl=44,pr=6,pt=10,pb=24;
+  const all=series.flatMap(s=>s.values);
+  let max=Math.max(1,...all), min=Math.min(0,...all);
+  const step=niceStep((max-min)/4||1); max=Math.ceil(max/step)*step; min=Math.floor(min/step)*step;
+  const y=v=>pt+(H-pt-pb)*(max-v)/((max-min)||1);
+  const n=labels.length, gw=(W-pl-pr)/n, bw=Math.min(22,(gw-6)/series.length);
+  let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">`;
+  for(let v=min; v<=max+1e-9; v+=step){
+    s+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}"/><text x="${pl-5}" y="${y(v)+3}" text-anchor="end">${Math.abs(v)>=1000?(v/1000)+'k':v}</text>`;
+  }
+  labels.forEach((lb,i)=>{
+    const cx=pl+gw*i+gw/2;
+    series.forEach((se,j)=>{
+      const v=se.values[i]; const x=cx-(series.length*bw)/2+j*bw;
+      const y0=y(0), y1=y(v);
+      s+=`<rect x="${x}" y="${Math.min(y0,y1)}" width="${bw-1}" height="${Math.max(0.5,Math.abs(y0-y1))}" rx="2" fill="${se.color}"><title>${esc(se.name)} ${esc(lb)}: ${chf(v)}</title></rect>`;
     });
+    s+=`<text x="${cx}" y="${H-8}" text-anchor="middle">${esc(lb)}</text>`;
+  });
+  s+='</svg><div class="legend">'+series.map(se=>`<span><i style="background:${se.color}"></i>${esc(se.name)}</span>`).join('')+'</div>';
+  return s;
+}
 
-    function formatCHF(val) {
-      return Math.round(val).toLocaleString("de-CH") + " CHF";
+/* ============ Ansichten ============ */
+function scopeSeg(){
+  return `<div class="seg">${['all','NJ','VS'].map(s=>`<button class="${ui.scope===s?'on '+(s==='NJ'?'nj':s==='VS'?'vs':''):''}" data-scope="${s}">${scopeLabel[s]}</button>`).join('')}</div>`;
+}
+function monthNav(){
+  return `<div class="mnav"><button data-mshift="-1" aria-label="Vorheriger Monat">‹</button>
+    <div class="lab">${label(ui.key)}<input type="month" value="${toInput(ui.key)}" data-mpick aria-label="Monat wählen"></div>
+    <button data-mshift="1" aria-label="Nächster Monat">›</button></div>`;
+}
+function viewMonth(){
+  const md=monthData(ui.key), c=calc(md), P=pick(c,ui.scope);
+  const empty = !S.entries.length && !Object.keys(S.lohn).length;
+  let h=`<div class="bar">${monthNav()}<span class="grow"></span>${scopeSeg()}</div>`;
+  if(empty){
+    h+=`<div class="card"><h2>Willkommen</h2><p>Noch keine Daten. Du kannst deine Startdaten aus dem Excel (Fixkosten, Löhne Juli–September) laden oder von Hand mit <b>＋</b> beginnen.</p><div class="actions"><button class="btn" data-act="seed">Startdaten laden</button></div></div>`;
+  }
+  const rows=[['ein','Einnahmen',''],['mon','Monatliche Ausgaben',''],['einm','Einmalige Ausgaben',''],['steuer','Buchung ans Steuerkonto','jährliche Kosten ÷ 12'],['spar','Buchung ins Sparkonto','']];
+  const quote=P.ein?P.spar/P.ein:0;
+  h+=`<div class="grid two"><div>
+    <div class="card"><h2>${label(ui.key)} · ${scopeLabel[ui.scope]}${md.frozen?'<span class="frozen">🔒 eingefroren</span>':''}</h2>
+    ${rows.map(([f,l,sub])=>`<div class="kv ${f}"><div class="l">${l}${sub?`<small>${sub}</small>`:''}</div><div class="v ${f==='spar'&&P[f]<0?'neg':''}">${chf(P[f])}</div></div>`).join('')}
+    <div class="quote"><span>Sparquote</span><span>${P.ein?(quote*100).toFixed(1)+' %':'–'}</span></div>
+    ${ui.scope==='all'?`<div class="sub3"><div class="n">Nicola spart<b>${chf(c.N.spar)}</b></div><div class="v">Vanessa spart<b>${chf(c.V.spar)}</b></div><div>Steuerkonto<b>${chf(c.H.steuer)}</b></div></div>`:''}
+    </div>`;
+  // Kategorien
+  const all=[...new Set([...cats(), ...Object.keys(c.cat)])];
+  const vals=all.map(k=>{const o=c.cat[k]||{n:0,v:0}; return {k,n:o.n,v:o.v,t:ui.scope==='NJ'?o.n:ui.scope==='VS'?o.v:o.n+o.v};}).filter(x=>x.t>0.004);
+  const mx=Math.max(1,...vals.map(x=>x.t));
+  const tot=vals.reduce((a,x)=>a+x.t,0);
+  h+=`<div class="card bars"><h2>Ausgaben nach Kategorie</h2>${vals.length?vals.sort((a,b)=>b.t-a.t).map(x=>{
+    const bar=ui.scope==='all'?`<i style="width:${x.n/mx*100}%;background:var(--nic)"></i><i style="width:${x.v/mx*100}%;background:var(--van)"></i>`:`<i style="width:${x.t/mx*100}%;background:${ui.scope==='NJ'?'var(--nic)':'var(--van)'}"></i>`;
+    return `<div class="row"><span>${esc(x.k)}</span><div class="track">${bar}</div><span class="amt">${fmt(x.t)}</span></div>`;}).join('')+`<div class="row" style="font-weight:700"><span>Total</span><span></span><span class="amt">${fmt(tot)}</span></div>`:'<div class="empty">Keine Ausgaben in diesem Monat.</div>'}
+    ${ui.scope==='all'?'<div class="legend"><span><i style="background:var(--nic)"></i>Nicola</span><span><i style="background:var(--van)"></i>Vanessa</span></div>':''}
+    <div class="hint" style="margin-top:8px">inkl. Steuerkonto-Anteil (Jahreskosten ÷ 12)</div></div>`;
+  h+=`</div><div>`;
+  // Detail
+  const lines=[];
+  if(ui.scope!=='VS' && md.lohnN) lines.push({kat:'Einnahmen',name:'Lohn Nicola',art:'Lohn',amt:md.lohnN,wer:'NJ'});
+  if(ui.scope!=='NJ' && md.lohnV) lines.push({kat:'Einnahmen',name:'Lohn Vanessa',art:'Lohn',amt:md.lohnV,wer:'VS'});
+  md.items.forEach(it=>{ const a=itemAmt(it,ui.scope); if(a>0.004) lines.push({kat:it.art==='Lohn'?'Einnahmen':it.kat,name:it.name,art:it.art,amt:a,wer:it.wer,betrag:it.betrag}); });
+  const groups={}; lines.forEach(l=>(groups[l.kat]=groups[l.kat]||[]).push(l));
+  const order=['Einnahmen',...all];
+  h+=`<div class="card"><h2>Was wird in diesem Monat bezahlt</h2>`;
+  if(!lines.length) h+='<div class="empty">Keine Einträge.</div>';
+  order.filter(k=>groups[k]).forEach(k=>{
+    const sum=groups[k].reduce((a,l)=>a+l.amt,0);
+    h+=`<details ${k==='Einnahmen'?'':'open'}><summary>${esc(k)} <span style="float:right;font-variant-numeric:tabular-nums">${fmt(sum)}</span></summary>`+
+      groups[k].map(l=>`<div class="item a-${l.art}" style="box-shadow:none;background:var(--bg)"><div class="m"><div class="t">${esc(l.name)}</div><div class="s"><span class="who ${l.wer==='50/50'?'b':l.wer}">${l.wer}</span>${l.art}${l.art==='Jährlich'?' · '+chf(l.betrag)+' ÷ 12':''}</div></div><div class="a">${fmt(l.amt)}</div></div>`).join('')+`</details>`;
+  });
+  h+=`</div></div></div>`;
+  return h;
+}
+
+function entryRow(e,k){
+  const st=status(e,k), m=monthlyAmount(e);
+  const range = e.art==='Einmalig' ? short(e.ab) : (short(e.ab)+' – '+(e.bis==null?'offen':short(e.bis)));
+  const stTxt = st==='on'?'': st==='past'?'· abgelaufen': st==='future'?'· geplant':'';
+  return `<div class="item a-${e.art} ${st==='on'?'':'off'}" data-edit="${e.id}">
+    <div class="m"><div class="t">${esc(e.name||'(ohne Name)')}</div>
+    <div class="s"><span class="who ${e.wer==='50/50'?'b':e.wer}">${e.wer}</span>${e.art} · ${range} ${stTxt}</div></div>
+    <div class="a">${fmt(e.betrag)}${e.art==='Jährlich'?`<small>${fmt(m)} / Monat</small>`:''}</div></div>`;
+}
+function viewEntries(){
+  const k=ui.key;
+  let list=S.entries.slice();
+  if(ui.onlyActive) list=list.filter(e=>isActive(e,k));
+  if(ui.filterKat) list=list.filter(e=>(e.art==='Lohn'?'Lohn':e.kat)===ui.filterKat);
+  if(ui.scope!=='all') list=list.filter(e=>{const s=shares(e.wer); return (ui.scope==='NJ'?s.n:s.v)>0;});
+  const groups={}; list.forEach(e=>{const g=e.art==='Lohn'?'Weitere Einnahmen':e.kat; (groups[g]=groups[g]||[]).push(e);});
+  const order=['Weitere Einnahmen',...cats()]; Object.keys(groups).forEach(g=>{ if(!order.includes(g)) order.push(g); });
+  let h=`<div class="bar">${monthNav()}<span class="grow"></span>${scopeSeg()}</div>
+   <div class="bar"><select data-filter style="padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--card)"><option value="">Alle Kategorien</option>${['Lohn',...cats()].map(c=>`<option ${ui.filterKat===c?'selected':''} value="${esc(c)}">${c==='Lohn'?'Weitere Einnahmen':esc(c)}</option>`).join('')}</select>
+   <label style="display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted)"><input type="checkbox" data-only ${ui.onlyActive?'checked':''}> nur gültig im ${MONTHS[ymOf(k).m-1]}</label></div><div class="list">`;
+  const names=order.filter(g=>groups[g]);
+  if(!names.length) h+=`<div class="empty">Keine Einträge${ui.onlyActive?' in diesem Monat':''}.<br>Mit <b>＋</b> einen hinzufügen.</div>`;
+  names.forEach(g=>{
+    const sum=groups[g].filter(e=>isActive(e,k)).reduce((a,e)=>{const s=shares(e.wer),m=monthlyAmount(e); return a+m*(ui.scope==='NJ'?s.n:ui.scope==='VS'?s.v:1);},0);
+    h+=`<div class="grp"><span>${esc(g)}</span><span>${fmt(sum)}</span></div>`+groups[g].sort((a,b)=>(b.betrag-a.betrag)).map(e=>entryRow(e,k)).join('');
+  });
+  return h+`</div><button class="fab" data-act="add" aria-label="Eintrag hinzufügen">＋</button>`;
+}
+
+function viewLohn(){
+  const f=firstKey(), cur=nowKey();
+  const start=Math.min(f==null?cur:f, cur-1), end=cur+12;
+  let h=`<div class="card"><h2>Löhne pro Monat</h2><div class="hint">Nur den tatsächlichen Lohn des Monats eintragen. Leer = gleicher Lohn wie im Vormonat (grau angezeigt). Alte Monate bleiben stehen – nichts löschen.</div>
+  <div class="lohn-head"><span>Monat</span><span>Nicola</span><span>Vanessa</span></div>`;
+  for(let k=start;k<=end;k++){
+    const o=S.lohn[k]||{}, b=lohnBase(k);
+    h+=`<div class="lohn-row ${k===ui.key?'cur':''}"><span class="mo">${label(k)}${S.frozen[k]?' 🔒':''}</span>
+      <input type="number" step="0.05" inputmode="decimal" data-lohn="${k}" data-p="n" value="${o.n??''}" placeholder="${fmt(b.n)}">
+      <input type="number" step="0.05" inputmode="decimal" data-lohn="${k}" data-p="v" value="${o.v??''}" placeholder="${fmt(b.v)}"></div>`;
+  }
+  return h+`</div>`;
+}
+
+function yearData(y){
+  const out=[];
+  for(let m=1;m<=12;m++){ const md=monthData(MK(y,m)); out.push({m,k:MK(y,m),c:calc(md),frozen:md.frozen}); }
+  return out;
+}
+const sumField=(rows,P,f)=>rows.reduce((a,r)=>a+pick(r.c,P)[f],0);
+function viewYear(){
+  const sc=ui.scope;
+  let h=`<div class="bar"><div class="mnav"><button data-yshift="-1">‹</button><div class="lab">${ui.year}</div><button data-yshift="1">›</button></div>
+    <div class="seg"><button class="${ui.yview==='year'?'on':''}" data-yview="year">Jahr</button><button class="${ui.yview==='cmp'?'on':''}" data-yview="cmp">Vergleich</button></div><span class="grow"></span>${scopeSeg()}</div>`;
+  if(ui.yview==='year'){
+    const rows=yearData(ui.year), cur=nowKey();
+    const ausg=r=>{const P=pick(r.c,sc); return P.mon+P.einm;};
+    h+=`<div class="card"><h2>Jahresübersicht ${ui.year} · ${scopeLabel[sc]}</h2><div class="scroll"><table class="t"><tr><th>Monat</th><th>Einn.</th><th>Ausg.</th><th>Steuerk.</th><th>Spar</th></tr>`+
+      rows.map(r=>{const P=pick(r.c,sc); return `<tr class="${r.k===ui.key?'cur':r.k>cur?'fut':''}"><td>${MONTHS[r.m-1].slice(0,3)}${r.frozen?' 🔒':''}</td><td>${fmt0(P.ein)}</td><td>${fmt0(ausg(r))}</td><td>${fmt0(P.steuer)}</td><td class="${P.spar<0?'neg':''}">${fmt0(P.spar)}</td></tr>`;}).join('')+
+      `<tr class="tot"><td>Total</td><td>${fmt0(sumField(rows,sc,'ein'))}</td><td>${fmt0(rows.reduce((a,r)=>a+ausg(r),0))}</td><td>${fmt0(sumField(rows,sc,'steuer'))}</td><td>${fmt0(sumField(rows,sc,'spar'))}</td></tr></table></div>
+      <div class="hint">🔒 = eingefroren · grau = geplant (aus den laufenden Einträgen hochgerechnet)</div></div>
+      <div class="card"><h2>Verlauf</h2>${chart(rows.map(r=>MONTHS[r.m-1].slice(0,3)),[
+        {name:'Einnahmen',color:'#FFC000',values:rows.map(r=>pick(r.c,sc).ein)},
+        {name:'Ausgaben',color:'#70AD47',values:rows.map(ausg)},
+        {name:'Sparkonto',color:'#2E75B6',values:rows.map(r=>pick(r.c,sc).spar)}])}</div>`;
+    const all=[...new Set([...cats(),...rows.flatMap(r=>Object.keys(r.c.cat))])];
+    const ct=all.map(k=>{let n=0,v=0; rows.forEach(r=>{const o=r.c.cat[k]; if(o){n+=o.n;v+=o.v;}}); return {k,n,v};}).filter(x=>x.n+x.v>0.004);
+    h+=`<div class="card"><h2>Ausgaben nach Kategorie (inkl. Steuerkonto-Anteil)</h2><div class="scroll"><table class="t"><tr><th>Kategorie</th><th>Nicola</th><th>Vanessa</th><th>Total</th></tr>`+
+      ct.map(x=>`<tr><td>${esc(x.k)}</td><td>${fmt0(x.n)}</td><td>${fmt0(x.v)}</td><td>${fmt0(x.n+x.v)}</td></tr>`).join('')+
+      `<tr class="tot"><td>Total</td><td>${fmt0(ct.reduce((a,x)=>a+x.n,0))}</td><td>${fmt0(ct.reduce((a,x)=>a+x.v,0))}</td><td>${fmt0(ct.reduce((a,x)=>a+x.n+x.v,0))}</td></tr></table></div></div>`;
+  } else {
+    const ys=[ui.year-1,ui.year,ui.year+1,ui.year+2,ui.year+3];
+    const data=ys.map(y=>({y,rows:yearData(y)}));
+    const line=(lab,fn,cls='')=>`<tr class="${cls}"><td>${lab}</td>${data.map(d=>`<td>${fn(d.rows)}</td>`).join('')}</tr>`;
+    h+=`<div class="card"><h2>Jahresvergleich · ${scopeLabel[sc]}</h2><div class="scroll"><table class="t"><tr><th></th>${ys.map(y=>`<th>${y}</th>`).join('')}</tr>`+
+      line('Einnahmen',r=>fmt0(sumField(r,sc,'ein')))+
+      line('Monatl. + einm. Ausgaben',r=>fmt0(sumField(r,sc,'mon')+sumField(r,sc,'einm')))+
+      line('Steuerkonto',r=>fmt0(sumField(r,sc,'steuer')))+
+      line('Sparkonto',r=>fmt0(sumField(r,sc,'spar')),'tot')+
+      line('Sparquote',r=>{const e=sumField(r,sc,'ein'); return e?(sumField(r,sc,'spar')/e*100).toFixed(1)+' %':'–';})+`</table></div>
+      <div class="hint">Zukünftige Jahre sind Hochrechnungen aus den laufenden Einträgen.</div></div>
+      <div class="card"><h2>Vergleich</h2>${chart(ys.map(String),[
+        {name:'Einnahmen',color:'#FFC000',values:data.map(d=>sumField(d.rows,sc,'ein'))},
+        {name:'Ausgaben',color:'#70AD47',values:data.map(d=>sumField(d.rows,sc,'mon')+sumField(d.rows,sc,'einm')+sumField(d.rows,sc,'steuer'))},
+        {name:'Sparkonto',color:'#2E75B6',values:data.map(d=>sumField(d.rows,sc,'spar'))}])}</div>`;
+  }
+  return h;
+}
+
+function viewMore(){
+  const f=firstKey(), cur=nowKey();
+  const frozenKeys=Object.keys(S.frozen).map(Number).sort((a,b)=>b-a);
+  const user=backend&&backend.user;
+  let h=`<div class="grid two"><div>
+  <div class="card"><h2>Verbindung</h2>
+    <p style="margin:0 0 8px">${backend&&backend.mode==='firebase'?`☁ Firebase · angemeldet als <b>${esc(user&&user.email||'')}</b>`:'💾 Lokaler Modus – Daten nur in diesem Browser'}</p>
+    <div class="actions">${backend&&backend.mode==='firebase'?'<button class="btn sec sm" data-act="logout">Abmelden</button>':''}
+    ${backend&&backend.mode==='local'?'<button class="btn sm" data-act="to-firebase">Mit Firebase verbinden</button>':'<button class="btn sec sm" data-act="to-local">Lokal testen</button>'}
+    <button class="btn sec sm" data-act="reset-config">Firebase-Konfiguration ändern</button></div></div>
+  <div class="card"><h2>Kategorien</h2>
+    ${cats().map(c=>{const used=S.entries.some(e=>e.kat===c); return `<div class="kv" style="background:var(--bg)"><span>${esc(c)}</span>${used?'<small style="color:var(--muted)">in Verwendung</small>':`<button class="btn sec sm" data-delcat="${esc(c)}">Entfernen</button>`}</div>`;}).join('')}
+    <form data-addcat class="actions"><input name="c" placeholder="Neue Kategorie" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--bg)"><button class="btn sm">Hinzufügen</button></form></div>
+  <div class="card"><h2>Backup</h2><div class="actions"><button class="btn sec sm" data-act="export">Daten exportieren (JSON)</button><label class="btn sec sm" style="cursor:pointer">Importieren<input type="file" accept="application/json" data-import hidden></label><button class="btn sec sm" data-act="seed">Startdaten laden</button></div>
+  <div class="hint">Import und Startdaten fügen hinzu bzw. überschreiben gleiche Einträge nicht doppelt.</div></div>
+  </div><div>
+  <div class="card"><h2>Verlauf (eingefrorene Monate)</h2>
+  <div class="hint">Vergangene Monate werden automatisch eingefroren. Danach kannst du Einträge löschen oder ändern, ohne dass sich alte Monate verändern. Neu berechnen = Monat nochmals aus den heutigen Einträgen und Löhnen bilden.</div>
+  ${frozenKeys.length?frozenKeys.map(k=>`<div class="kv" style="background:var(--bg)"><span>🔒 ${label(k)}</span><button class="btn sec sm" data-refreeze="${k}">Neu berechnen</button></div>`).join(''):'<div class="empty">Noch keine Monate eingefroren (passiert automatisch ab dem nächsten Monat).</div>'}
+  </div>
+  <div class="card"><h2>Hinweise</h2><div class="hint" style="line-height:1.6">
+   • <b>Monatlich</b>: läuft jeden Monat weiter, bis ein «Bis Monat» gesetzt ist.<br>
+   • <b>Einmalig</b>: zählt nur im gewählten Monat.<br>
+   • <b>Jährlich</b>: Jahresbetrag, wird ÷ 12 ans Steuerkonto gebucht.<br>
+   • <b>Abo beenden</b>: Eintrag öffnen → «Ab diesem Monat beenden». Wieder abonniert? Neuen Eintrag anlegen.<br>
+   • <b>Preis ändert sich</b>: Eintrag öffnen → «Betrag ab diesem Monat ändern».</div></div>
+  </div></div>`;
+  return h;
+}
+
+/* ============ Rendern ============ */
+const TABS=[['month','🏠','Monat'],['entries','🧾','Einträge'],['lohn','💼','Löhne'],['year','📊','Jahr'],['more','⚙️','Mehr']];
+function render(){
+  const app=$('#app');
+  if(ui.phase==='setup') return renderSetup(app);
+  if(ui.phase==='login') return renderLogin(app);
+  if(ui.phase==='boot'||ui.phase==='loading'){ app.innerHTML=`<div class="center"><div>${ui.err?esc(ui.err):'Lade …'}</div></div>`; return; }
+  if(ui.phase==='denied'){ app.innerHTML=`<div class="center"><div class="card"><h2>Kein Zugriff</h2><p>${esc(ui.user&&ui.user.email||'')} ist für dieses Budget nicht freigeschaltet (Firestore-Regeln).</p><div class="actions"><button class="btn" data-act="logout">Mit anderem Konto anmelden</button></div></div></div>`; return; }
+  const body = ui.tab==='month'?viewMonth(): ui.tab==='entries'?viewEntries(): ui.tab==='lohn'?viewLohn(): ui.tab==='year'?viewYear(): viewMore();
+  const mode = backend&&backend.mode==='firebase' ? '<span class="pill ok">☁ synchronisiert</span>' : '<span class="pill">💾 lokal</span>';
+  app.innerHTML=`<header class="top"><h1>Haushaltsbudget</h1>${mode}</header>
+    <nav class="tabs">${TABS.map(([id,i,l])=>`<button class="${ui.tab===id?'on':''}" data-tab="${id}"><span class="i">${i}</span>${l}</button>`).join('')}</nav>${body}`;
+}
+function renderLogin(app){
+  app.innerHTML=`<div class="center"><div style="font-size:44px">💶</div><h1 style="margin:0">Haushaltsbudget</h1><div class="card"><h2>Anmelden</h2><p>Die Daten sind privat und nur für freigeschaltete Konten sichtbar.</p><div class="actions"><button class="btn grow" data-act="login">Mit Google anmelden</button></div>${ui.err?`<div class="err">${esc(ui.err)}</div>`:''}<div class="actions" style="margin-top:14px"><button class="btn sec sm" data-act="to-local">Lokal testen (ohne Anmeldung)</button><button class="btn sec sm" data-act="reset-config">Konfiguration ändern</button></div></div></div>`;
+}
+function renderSetup(app){
+  app.innerHTML=`<div class="center"><div style="font-size:44px">💶</div><h1 style="margin:0">Haushaltsbudget</h1><div class="card"><h2>Firebase verbinden</h2>
+  <p style="margin-top:0">Die App-ID ist schon hinterlegt. Es fehlen noch <code>apiKey</code> und <code>projectId</code>. In der Firebase-Konsole: Projekteinstellungen → Allgemein → Deine Apps → SDK-Konfiguration. Den ganzen <code>firebaseConfig</code>-Block hier einfügen:</p>
+  <textarea id="cfgtxt" placeholder='const firebaseConfig = {\n  apiKey: "…",\n  authDomain: "…firebaseapp.com",\n  projectId: "…",\n  …\n};'></textarea>
+  ${ui.err?`<div class="err">${esc(ui.err)}</div>`:''}
+  <div class="actions"><button class="btn" data-act="save-config">Verbinden</button><button class="btn sec" data-act="to-local">Erst lokal testen</button></div></div></div>`;
+}
+
+/* ============ Eintrag bearbeiten ============ */
+function openEntry(id){
+  const isNew=!id;
+  const e=isNew?{art:'Monatlich',kat:cats()[0],name:'',betrag:'',wer:'50/50',ab:ui.key,bis:null}:{...S.entries.find(x=>x.id===id)};
+  const m=$('#modal');
+  const form=()=>`<div class="sheet"><h3>${isNew?'Neuer Eintrag':'Eintrag bearbeiten'}</h3>
+  <form id="ef">
+    <div class="two-c"><label class="f">Art<select name="art">${['Monatlich','Einmalig','Jährlich','Lohn'].map(a=>`<option value="${a}" ${e.art===a?'selected':''}>${a==='Lohn'?'Weitere Einnahme':a}</option>`).join('')}</select></label>
+    <label class="f" data-katwrap>Kategorie<select name="kat">${[...new Set([...cats(),e.kat].filter(Boolean))].map(c=>`<option ${e.kat===c?'selected':''}>${esc(c)}</option>`).join('')}</select></label></div>
+    <label class="f">Beschreibung<input name="name" value="${esc(e.name)}" placeholder="z. B. Netflix" autocomplete="off"></label>
+    <div class="two-c"><label class="f"><span data-betrag>Betrag (CHF)</span><input name="betrag" type="number" step="0.05" inputmode="decimal" value="${e.betrag}" required></label>
+    <label class="f">Wer zahlt<select name="wer">${[['NJ','Nicola'],['VS','Vanessa'],['50/50','50 / 50']].map(([v,l])=>`<option value="${v}" ${e.wer===v?'selected':''}>${l}</option>`).join('')}</select></label></div>
+    <div class="two-c"><label class="f"><span data-ablab>Ab Monat</span><input name="ab" type="month" value="${toInput(e.ab)}" required></label>
+    <label class="f" data-biswrap>Bis Monat (leer = läuft weiter)<input name="bis" type="month" value="${toInput(e.bis)}"></label></div>
+    <div class="hint" data-hint></div><div class="err" data-err></div>
+    <div class="actions"><button class="btn grow" type="submit">Speichern</button><button class="btn sec" type="button" data-close>Abbrechen</button></div>
+    ${isNew?'':`<div class="actions" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
+      ${e.art!=='Einmalig'?`<button class="btn sec sm" type="button" data-end>Ab ${label(ui.key)} beenden</button><button class="btn sec sm" type="button" data-newamt>Betrag ab ${label(ui.key)} ändern</button>`:''}
+      <button class="btn danger sm" type="button" data-del>Löschen</button></div>`}
+  </form></div>`;
+  m.innerHTML=form(); m.classList.add('on');
+  const f=$('#ef');
+  const sync=()=>{
+    const art=f.art.value;
+    $('[data-katwrap]',f).style.display=art==='Lohn'?'none':'';
+    $('[data-biswrap]',f).style.display=art==='Einmalig'?'none':'';
+    $('[data-ablab]',f).textContent=art==='Einmalig'?'Monat':'Ab Monat';
+    $('[data-betrag]',f).textContent=art==='Jährlich'?'Jahresbetrag (CHF)':'Betrag (CHF)';
+    const ab=fromInput(f.ab.value);
+    $('[data-hint]',f).textContent = art==='Jährlich'&&f.betrag.value?`= ${chf(f.betrag.value/12)} pro Monat ans Steuerkonto`: (ab&&ab<nowKey()?'Vergangene Monate sind eingefroren und ändern sich nicht.':'');
+  };
+  f.addEventListener('input',sync); f.addEventListener('change',sync); sync();
+  $('[data-close]',f).onclick=closeModal;
+  f.onsubmit=async ev=>{
+    ev.preventDefault();
+    const betrag=parseFloat(f.betrag.value), ab=fromInput(f.ab.value); let bis=f.art.value==='Einmalig'?null:fromInput(f.bis.value);
+    const err=$('[data-err]',f);
+    if(!(betrag>=0)){ err.textContent='Bitte einen Betrag eingeben.'; return; }
+    if(ab==null){ err.textContent='Bitte einen Monat wählen.'; return; }
+    if(bis!=null && bis<ab){ err.textContent='«Bis Monat» liegt vor «Ab Monat».'; return; }
+    const obj={art:f.art.value, kat:f.art.value==='Lohn'?'Lohn':f.kat.value, name:f.name.value.trim(), betrag, wer:f.wer.value, ab, bis};
+    await autoFreeze();
+    await backend.set('entries', e.id||uid(), obj);
+    closeModal(); toast('Gespeichert');
+  };
+  if(!isNew){
+    $('[data-del]',f).onclick=async()=>{ if(!confirm(`«${e.name||'Eintrag'}» wirklich löschen?\nVergangene (eingefrorene) Monate bleiben unverändert.`)) return; await autoFreeze(); await backend.del('entries',e.id); closeModal(); toast('Gelöscht'); };
+    const end=$('[data-end]',f); if(end) end.onclick=async()=>{
+      if(e.ab>=ui.key){ if(!confirm('Der Eintrag beginnt erst in diesem Monat oder später. Ganz löschen?')) return; await autoFreeze(); await backend.del('entries',e.id); }
+      else { await autoFreeze(); const o={...e}; delete o.id; o.bis=ui.key-1; await backend.set('entries',e.id,o); }
+      closeModal(); toast('Beendet');
+    };
+    const na=$('[data-newamt]',f); if(na) na.onclick=async()=>{
+      const v=prompt(`Neuer Betrag ab ${label(ui.key)} (bisher ${fmt(e.betrag)}):`); if(v==null) return;
+      const nb=parseFloat(String(v).replace(',','.').replace(/[’' ]/g,'')); if(!(nb>=0)){ toast('Ungültiger Betrag'); return; }
+      if(e.ab>=ui.key){ const o={...e,betrag:nb}; delete o.id; await autoFreeze(); await backend.set('entries',e.id,o); }
+      else { await autoFreeze(); const oldO={...e}; delete oldO.id; oldO.bis=ui.key-1; const newO={...oldO,betrag:nb,ab:ui.key,bis:e.bis}; await backend.batch([{col:'entries',id:e.id,obj:oldO},{col:'entries',id:uid(),obj:newO}]); }
+      closeModal(); toast('Betrag geändert');
+    };
+  }
+}
+function closeModal(){ const m=$('#modal'); m.classList.remove('on'); m.innerHTML=''; }
+
+/* ============ Aktionen ============ */
+async function seedData(){
+  if(!SEED){ toast('Keine Startdaten eingebaut'); return; }
+  if(S.entries.length && !confirm('Startdaten zu den vorhandenen Einträgen hinzufügen?')) return;
+  const ops=[]; const have=new Set(S.entries.map(e=>[e.art,e.kat,e.name,e.betrag,e.wer,e.ab].join('|')));
+  SEED.entries.forEach(e=>{ if(!have.has([e.art,e.kat,e.name,e.betrag,e.wer,e.ab].join('|'))) ops.push({col:'entries',id:uid(),obj:e}); });
+  Object.entries(SEED.lohn).forEach(([k,o])=>{ if(!S.lohn[k]) ops.push({col:'lohn',id:k,obj:o}); });
+  if(!ops.length){ toast('Alles schon vorhanden'); return; }
+  await backend.batch(ops); toast(ops.length+' Einträge geladen');
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify({version:1,exported:new Date().toISOString(),entries:S.entries,lohn:S.lohn,frozen:S.frozen,settings:S.settings},null,1)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='budget-backup-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+async function importData(file){
+  try{
+    const d=JSON.parse(await file.text()); const ops=[];
+    const have=new Set(S.entries.map(e=>[e.art,e.kat,e.name,e.betrag,e.wer,e.ab].join('|')));
+    (d.entries||[]).forEach(e=>{ const {id,...o}=e; if(!have.has([o.art,o.kat,o.name,o.betrag,o.wer,o.ab].join('|'))) ops.push({col:'entries',id:id||uid(),obj:o}); });
+    Object.entries(d.lohn||{}).forEach(([k,o])=>ops.push({col:'lohn',id:k,obj:o}));
+    Object.entries(d.frozen||{}).forEach(([k,o])=>{ if(!S.frozen[k]) ops.push({col:'frozen',id:k,obj:o}); });
+    if(d.settings&&d.settings.kats) ops.push({col:'settings',id:'main',obj:{...S.settings,...d.settings}});
+    if(!ops.length){ toast('Nichts zu importieren'); return; }
+    await backend.batch(ops); toast(ops.length+' Einträge importiert');
+  }catch(e){ toast('Datei konnte nicht gelesen werden'); }
+}
+async function refreezeMonth(k){
+  const l=lohnBase(k);
+  await backend.set('frozen',String(k),{key:k,items:liveItems(k),lohnN:l.n,lohnV:l.v,at:Date.now()});
+  toast(label(k)+' neu berechnet');
+}
+async function saveLohn(k,p,val){
+  const o={...(S.lohn[k]||{})};
+  if(val===''||val==null||isNaN(val)) delete o[p]; else o[p]=val;
+  if(o.n==null && o.v==null) await backend.del('lohn',String(k)); else await backend.set('lohn',String(k),{n:o.n??null,v:o.v??null});
+  // eingefrorene Monate ab k mit neuen Lohnwerten nachziehen
+  setTimeout(async()=>{
+    const ops=[]; Object.keys(S.frozen).map(Number).filter(x=>x>=k).forEach(x=>{
+      const l=lohnBase(x), fr=S.frozen[x]; if(fr.lohnN!==l.n||fr.lohnV!==l.v) ops.push({col:'frozen',id:String(x),obj:{...fr,lohnN:l.n,lohnV:l.v}});
+    });
+    if(ops.length) await backend.batch(ops);
+  },200);
+}
+
+/* ============ Ereignisse ============ */
+document.addEventListener('click', async ev=>{
+  const t=ev.target.closest('[data-tab],[data-scope],[data-mshift],[data-yshift],[data-yview],[data-edit],[data-act],[data-refreeze],[data-delcat]');
+  if(!t){ if(ev.target.id==='modal') closeModal(); return; }
+  const d=t.dataset;
+  if(d.tab){ ui.tab=d.tab; render(); window.scrollTo(0,0); }
+  else if(d.scope){ ui.scope=d.scope; lsSet('budget_scope',d.scope); render(); }
+  else if(d.mshift){ ui.key+=+d.mshift; ui.year=ymOf(ui.key).y; render(); }
+  else if(d.yshift){ ui.year+=+d.yshift; render(); }
+  else if(d.yview){ ui.yview=d.yview; render(); }
+  else if(d.edit){ openEntry(d.edit); }
+  else if(d.refreeze){ await refreezeMonth(+d.refreeze); }
+  else if(d.delcat){ const next=cats().filter(c=>c!==d.delcat); await backend.set('settings','main',{...S.settings,kats:next}); }
+  else if(d.act){
+    const a=d.act;
+    if(a==='add') openEntry(null);
+    else if(a==='seed') await seedData();
+    else if(a==='export') exportData();
+    else if(a==='login'){ try{ ui.err=''; await backend.signIn(); }catch(e){ ui.err='Anmeldung fehlgeschlagen: '+(e.code||e.message); render(); } }
+    else if(a==='logout'){ await backend.signOut(); ui.phase='login'; ready=false; render(); }
+    else if(a==='to-local'){ lsSet('budget_mode','local'); location.reload(); }
+    else if(a==='to-firebase'){ lsDel('budget_mode'); location.reload(); }
+    else if(a==='reset-config'){ lsDel('budget_fbconfig'); lsDel('budget_mode'); ui.phase='setup'; ui.err=''; render(); }
+    else if(a==='save-config'){
+      const txt=$('#cfgtxt').value; const cfg={...FIREBASE_CONFIG};
+      for(const m of txt.matchAll(/["']?(\w+)["']?\s*:\s*["']([^"']*)["']/g)) cfg[m[1]]=m[2];
+      if(!cfg.apiKey||!cfg.projectId){ ui.err='apiKey und projectId fehlen noch im eingefügten Text.'; render(); return; }
+      if(!cfg.authDomain) cfg.authDomain=cfg.projectId+'.firebaseapp.com';
+      lsSet('budget_fbconfig',JSON.stringify(cfg)); lsDel('budget_mode'); location.reload();
     }
+  }
+});
+document.addEventListener('change', async ev=>{
+  const t=ev.target;
+  if(t.matches('[data-mpick]')){ const k=fromInput(t.value); if(k){ ui.key=k; ui.year=ymOf(k).y; render(); } }
+  else if(t.matches('[data-filter]')){ ui.filterKat=t.value; render(); }
+  else if(t.matches('[data-only]')){ ui.onlyActive=t.checked; render(); }
+  else if(t.matches('[data-import]')){ if(t.files[0]) await importData(t.files[0]); t.value=''; }
+  else if(t.matches('input[data-lohn]')){ const v=t.value===''?'':parseFloat(t.value); await saveLohn(+t.dataset.lohn,t.dataset.p,v); }
+});
+document.addEventListener('submit', async ev=>{
+  if(ev.target.matches('[data-addcat]')){
+    ev.preventDefault(); const c=ev.target.c.value.trim(); if(!c) return;
+    if(cats().includes(c)){ toast('Gibt es schon'); return; }
+    await backend.set('settings','main',{...S.settings,kats:[...cats(),c]});
+  }
+});
+document.addEventListener('keydown', ev=>{ if(ev.key==='Escape') closeModal(); });
 
-    function loadFromStorage() {
-      const saved = localStorage.getItem("pwa_budget_entries_v1");
-      if (saved) {
-        try {
-          budgetEntries = JSON.parse(saved);
-        } catch (e) {
-          budgetEntries = [...DEFAULT_BUDGET];
-        }
-      } else {
-        budgetEntries = [...DEFAULT_BUDGET];
-      }
-    }
-
-    function saveToStorage() {
-      localStorage.setItem("pwa_budget_entries_v1", JSON.stringify(budgetEntries));
-      renderBudgetList();
-      updateSimulation();
-    }
-
-    // --- 3. TAB-NAVIGATION ---
-    function switchTab(tab) {
-      ["budget", "sim", "cloud"].forEach(t => {
-        document.getElementById("tab-" + t).classList.add("hidden");
-        const btn = document.getElementById("tab-btn-" + t);
-        btn.className = "flex-1 py-2.5 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition";
-      });
-      document.getElementById("tab-" + tab).classList.remove("hidden");
-      document.getElementById("tab-btn-" + tab).className = "flex-1 py-2.5 text-sm font-semibold rounded-lg bg-white text-slate-900 shadow-sm transition";
-      
-      if (tab === "sim") {
-        updateSimulation();
-      }
-    }
-
-    // --- 4. BUDGET-BERECHNUNGEN & DARSTELLUNG ---
-    function calculateTotals() {
-      let income = 0, fixed = 0, variable = 0;
-      budgetEntries.forEach(item => {
-        const val = Number(item.amount) || 0;
-        if (item.type === "income") income += val;
-        else if (item.type === "fixed") fixed += val;
-        else if (item.type === "variable") variable += val;
-      });
-      const savings = income - fixed - variable;
-      return { income, fixed, variable, savings };
-    }
-
-    function renderBudgetList() {
-      const totals = calculateTotals();
-      document.getElementById("kpi-income").textContent = formatCHF(totals.income);
-      document.getElementById("kpi-fixed").textContent = formatCHF(totals.fixed);
-      document.getElementById("kpi-variable").textContent = formatCHF(totals.variable);
-      
-      const savingsEl = document.getElementById("kpi-savings");
-      savingsEl.textContent = formatCHF(totals.savings);
-
-      const container = document.getElementById("entries-container");
-      container.innerHTML = "";
-
-      const groups = [
-        { key: "income", label: "Einnahmen", badgeClass: "bg-emerald-100 text-emerald-800" },
-        { key: "fixed", label: "Fixkosten", badgeClass: "bg-slate-200 text-slate-800" },
-        { key: "variable", label: "Variable Kosten", badgeClass: "bg-amber-100 text-amber-800" }
-      ];
-
-      groups.forEach(group => {
-        const items = budgetEntries.filter(e => e.type === group.key);
-        if (items.length === 0) return;
-
-        const groupHeader = document.createElement("div");
-        groupHeader.className = "pt-2 pb-1 text-xs font-bold uppercase tracking-wider text-slate-400";
-        groupHeader.textContent = group.label;
-        container.appendChild(groupHeader);
-
-        items.forEach(item => {
-          const row = document.createElement("div");
-          row.className = "flex items-center justify-between bg-slate-50 hover:bg-slate-100/80 p-2.5 rounded-xl border border-slate-200/80 transition gap-2";
-          row.innerHTML = `
-            <div class="flex items-center space-x-2.5 min-w-0 flex-1">
-              <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md ${group.badgeClass}">${group.label.split(" ")[0]}</span>
-              <span class="text-sm font-medium text-slate-800 truncate">${item.name}</span>
-            </div>
-            <div class="flex items-center space-x-2 shrink-0">
-              <input type="number" value="${item.amount}" onchange="updateEntryAmount(${item.id}, this.value)"
-                class="w-24 text-right px-2 py-1 text-sm font-bold bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <span class="text-xs text-slate-500">CHF</span>
-              <button onclick="deleteEntry(${item.id})" title="Eintrag löschen" class="text-slate-400 hover:text-rose-600 px-1.5 py-1 text-sm font-bold">✕</button>
-            </div>
-          `;
-          container.appendChild(row);
-        });
-      });
-
-      updateDonutChart(totals);
-    }
-
-    function addEntry(e) {
-      e.preventDefault();
-      const name = document.getElementById("entry-name").value.trim();
-      const amount = parseFloat(document.getElementById("entry-amount").value);
-      const type = document.getElementById("entry-type").value;
-      if (!name || isNaN(amount)) return;
-
-      budgetEntries.push({
-        id: Date.now(),
-        name,
-        amount,
-        type
-      });
-
-      document.getElementById("entry-name").value = "";
-      document.getElementById("entry-amount").value = "";
-      saveToStorage();
-    }
-
-    function updateEntryAmount(id, newVal) {
-      const idx = budgetEntries.findIndex(e => e.id === id);
-      if (idx !== -1) {
-        budgetEntries[idx].amount = parseFloat(newVal) || 0;
-        saveToStorage();
-      }
-    }
-
-    function deleteEntry(id) {
-      budgetEntries = budgetEntries.filter(e => e.id !== id);
-      saveToStorage();
-    }
-
-    function updateDonutChart(totals) {
-      const ctx = document.getElementById("budgetDonutChart").getContext("2d");
-      const dataVals = [
-        Math.max(0, totals.fixed),
-        Math.max(0, totals.variable),
-        Math.max(0, totals.savings)
-      ];
-
-      if (donutChart) {
-        donutChart.data.datasets[0].data = dataVals;
-        donutChart.update();
-        return;
-      }
-
-      donutChart = new Chart(ctx, {
-        type: "doughnut",
-        data: {
-          labels: ["Fixkosten", "Variabel", "Sparpotenzial"],
-          datasets: [{
-            data: dataVals,
-            backgroundColor: ["#334155", "#d97706", "#2563eb"],
-            borderWidth: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } }
-          },
-          cutout: "68%"
-        }
-      });
-    }
-
-    // --- 5. FINANZ-SIMULATION (WAS-WÄRE-WENN-ENGINE) ---
-    function updateSimulation() {
-      const totals = calculateTotals();
-      document.getElementById("sim-base-savings").textContent = formatCHF(totals.savings);
-
-      const initialCap = parseFloat(document.getElementById("sim-initial").value) || 0;
-      const extraSave = parseFloat(document.getElementById("sim-extra").value) || 0;
-      const annualReturn = parseFloat(document.getElementById("sim-return").value) || 0;
-      const inflation = parseFloat(document.getElementById("sim-inflation").value) || 0;
-      const years = parseInt(document.getElementById("sim-years").value) || 10;
-      const eventCost = parseFloat(document.getElementById("sim-event-cost").value) || 0;
-      
-      const eventYearSlider = document.getElementById("sim-event-year");
-      eventYearSlider.max = years;
-      if (parseInt(eventYearSlider.value) > years) eventYearSlider.value = years;
-      const eventYear = parseInt(eventYearSlider.value) || 1;
-
-      // Update Labels
-      document.getElementById("lbl-sim-initial").textContent = formatCHF(initialCap);
-      document.getElementById("lbl-sim-extra").textContent = (extraSave >= 0 ? "+" : "") + formatCHF(extraSave) + " / Mt.";
-      document.getElementById("lbl-sim-return").textContent = annualReturn.toFixed(1) + " %";
-      document.getElementById("lbl-sim-inflation").textContent = inflation.toFixed(1) + " %";
-      document.getElementById("lbl-sim-years").textContent = years + " Jahre";
-      document.getElementById("lbl-sim-event-cost").textContent = formatCHF(eventCost);
-      document.getElementById("lbl-sim-event-year").textContent = "Jahr " + eventYear;
-
-      const monthlySimulatedSavings = totals.savings + extraSave;
-      document.getElementById("sim-out-monthly").textContent = formatCHF(monthlySimulatedSavings) + " / Mt.";
-
-      // Calculate time series year by year (monthly compounding)
-      const labels = ["Heute"];
-      const seriesNominal = [initialCap];
-      const seriesReal = [initialCap];
-      const seriesBaseline = [initialCap]; // Without extra savings and at 0% return (pure cash box)
-
-      let currentNominal = initialCap;
-      let currentBaseline = initialCap;
-      const monthlyRate = (annualReturn / 100) / 12;
-
-      for (let y = 1; y <= years; y++) {
-        for (let m = 1; m <= 12; m++) {
-          currentNominal = currentNominal * (1 + monthlyRate) + monthlySimulatedSavings;
-          currentBaseline = currentBaseline + totals.savings;
-        }
-        if (y === eventYear && eventCost > 0) {
-          currentNominal -= eventCost;
-          currentBaseline -= eventCost;
-        }
-        const inflationDiscount = Math.pow(1 + inflation / 100, y);
-        const realVal = currentNominal / inflationDiscount;
-
-        labels.push("Jahr " + y);
-        seriesNominal.push(Math.round(currentNominal));
-        seriesReal.push(Math.round(realVal));
-        seriesBaseline.push(Math.round(currentBaseline));
-      }
-
-      const finalNominal = seriesNominal[seriesNominal.length - 1];
-      const finalReal = seriesReal[seriesReal.length - 1];
-
-      document.getElementById("sim-out-nominal").textContent = formatCHF(finalNominal);
-      document.getElementById("sim-out-real").textContent = formatCHF(finalReal);
-
-      const diffVsCash = finalNominal - seriesBaseline[seriesBaseline.length - 1];
-      document.getElementById("sim-summary-text").innerHTML = 
-        `Durch die Kombination aus Rendite (${annualReturn.toFixed(1)}%) und Sparraten-Anpassung (${extraSave >= 0 ? "+" : ""}${extraSave} CHF/Mt.) liegt dein Vermögen nach <strong>${years} Jahren</strong> um <strong>${formatCHF(diffVsCash)}</strong> höher als beim reinen Sparen auf dem unverzinsten Konto (inkl. ${formatCHF(eventCost)} Projektkosten in Jahr ${eventYear}).`;
-
-      renderSimChart(labels, seriesNominal, seriesReal, seriesBaseline);
-    }
-
-    function renderSimChart(labels, nominal, real, baseline) {
-      const ctx = document.getElementById("simLineChart").getContext("2d");
-      if (simChart) {
-        simChart.data.labels = labels;
-        simChart.data.datasets[0].data = nominal;
-        simChart.data.datasets[1].data = real;
-        simChart.data.datasets[2].data = baseline;
-        simChart.update();
-        return;
-      }
-
-      simChart = new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: "Simuliertes Vermögen (Nominal)",
-              data: nominal,
-              borderColor: "#059669",
-              backgroundColor: "rgba(5, 150, 105, 0.1)",
-              borderWidth: 3,
-              fill: true,
-              tension: 0.3
-            },
-            {
-              label: "Reale Kaufkraft (nach Inflation)",
-              data: real,
-              borderColor: "#4f46e5",
-              borderDash: [5, 5],
-              borderWidth: 2,
-              fill: false,
-              tension: 0.3
-            },
-            {
-              label: "Status Quo (0% Zins, ohne Anpassung)",
-              data: baseline,
-              borderColor: "#94a3b8",
-              borderWidth: 2,
-              fill: false,
-              tension: 0.2
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode: "index", intersect: false },
-          plugins: {
-            legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } }
-          },
-          scales: {
-            y: {
-              ticks: {
-                callback: function(value) { return value.toLocaleString("de-CH") + " CHF"; }
-              }
-            }
-          }
-        }
-      });
-    }
-
-    function resetSimulationToBudget() {
-      document.getElementById("sim-extra").value = 0;
-      document.getElementById("sim-return").value = 5.0;
-      document.getElementById("sim-inflation").value = 1.5;
-      document.getElementById("sim-years").value = 10;
-      document.getElementById("sim-event-cost").value = 15000;
-      document.getElementById("sim-event-year").value = 1;
-      updateSimulation();
-    }
-
-    // --- 6. BACKUP & CLOUD-FUNKTIONEN ---
-    function exportBudgetJSON() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(budgetEntries, null, 2));
-      const dlAnchor = document.createElement("a");
-      dlAnchor.setAttribute("href", dataStr);
-      dlAnchor.setAttribute("download", "mein_budget_backup.json");
-      document.body.appendChild(dlAnchor);
-      dlAnchor.click();
-      dlAnchor.remove();
-    }
-
-    function importBudgetJSON(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const imported = JSON.parse(e.target.result);
-          if (Array.isArray(imported)) {
-            budgetEntries = imported;
-            saveToStorage();
-            alert("Backup erfolgreich geladen!");
-            switchTab("budget");
-          }
-        } catch (err) {
-          alert("Fehler beim Lesen der Backup-Datei.");
-        }
-      };
-      reader.readAsText(file);
-    }
-
-    function resetDemoData() {
-      if (confirm("Möchtest du wirklich auf die Standard-Beispieldaten zurücksetzen?")) {
-        budgetEntries = [...DEFAULT_BUDGET];
-        saveToStorage();
-        switchTab("budget");
-      }
-    }
-
-    function saveFirebaseConfig() {
-      const val = document.getElementById("firebase-config-input").value.trim();
-      if (!val) {
-        alert("Bitte füge deinen Firebase-Konfigurationsblock ein.");
-        return;
-      }
-      localStorage.setItem("pwa_firebase_config", val);
-      document.getElementById("sync-dot").className = "w-2 h-2 rounded-full bg-emerald-400";
-      document.getElementById("sync-text").textContent = "Firebase-Konfiguration hinterlegt";
-      alert("Firebase-Konfiguration gespeichert! Sobald du deine echte Firestore-Projekt-ID einträgst, synchronisiert die App live.");
-    }
-  </script>
+/* ============ Start ============ */
+function onData(d){
+  S=d;
+  const a=document.activeElement;
+  if(a && a.matches && a.matches('input[data-lohn]')){ clearTimeout(onData.t); onData.t=setTimeout(render,600); return; }
+  if(ui.phase==='loading') ui.phase='app';
+  render();
+}
+async function startBackend(){
+  backend.onReady=async()=>{ ready=true; ui.phase='app'; await autoFreeze(); render(); };
+  await backend.start(onData, err=>{
+    if(err.code==='permission-denied'){ ui.phase='denied'; render(); }
+    else { ui.err='Fehler: '+(err.code||err.message); render(); }
+  });
+}
+async function boot(){
+  render();
+  let cfg=null;
+  try{ cfg=JSON.parse(lsGet('budget_fbconfig','null')); }catch{ cfg=null; }
+  if(!cfg && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.projectId) cfg=FIREBASE_CONFIG;
+  const mode=lsGet('budget_mode');
+  if(mode==='local'){ backend=LocalBackend(); ui.phase='loading'; await startBackend(); return; }
+  if(!cfg){ ui.phase='setup'; render(); return; }
+  try{
+    ui.phase='loading'; ui.err=''; render();
+    backend=await FirebaseBackend(cfg);
+    backend.onAuth(async u=>{
+      ui.user=u;
+      if(!u){ ui.phase='login'; ready=false; render(); return; }
+      ui.phase='loading'; render();
+      await startBackend();
+    });
+  }catch(e){ ui.phase='setup'; ui.err='Verbindung fehlgeschlagen: '+(e.code||e.message); render(); }
+}
+boot();
+</script>
 </body>
 </html>
