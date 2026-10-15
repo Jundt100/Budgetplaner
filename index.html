@@ -616,6 +616,7 @@ function viewDash(){
   if(expired.length) hl.push(`<div class="hl"><span class="ic">🧹</span><div><b>${expired.length} abgelaufene Einträge</b><div class="hint" style="margin:0">Vergangene Monate sind eingefroren, du kannst sie löschen.</div><div class="actions" style="margin-top:6px"><button class="btn sec sm" data-act="cleanup">Aufräumen</button></div></div></div>`);
   if(ending.length) hl.push(`<div class="hl"><span class="ic">⏳</span><div><b>Endet bald</b><div class="hint" style="margin:0">${ending.map(e=>esc(e.name)+' ('+short(e.bis)+')').join(', ')}</div></div></div>`);
   if(incompl.length) hl.push(`<div class="hl"><span class="ic">⚠️</span><div><b>${incompl.length} unvollständige Einträge</b><div class="hint" style="margin:0">Ohne Name oder Betrag, siehe Einträge.</div></div></div>`);
+  if(adm){ const ba=backupAge(); if(ba==null||ba>=14) hl.unshift(`<div class="hl"><span class="ic">💾</span><div><b>${ba==null?'Noch kein Backup gemacht':'Letztes Backup vor '+ba+' Tagen'}</b><div class="hint" style="margin:0">Sichere deine Daten regelmässig als Datei, z. B. einmal im Monat.</div><div class="actions" style="margin-top:6px"><button class="btn sec sm" data-act="export">Jetzt sichern</button></div></div></div>`); }
   const lastFrozen=Object.keys(S.frozen).map(Number).sort((a,b)=>b-a)[0];
   hl.push(`<div class="hl"><span class="ic">🔒</span><div><b>${lastFrozen?'Eingefroren bis '+label(lastFrozen):'Noch nichts eingefroren'}</b><div class="hint" style="margin:0">Vergangene Monate ändern sich nicht mehr, wenn du Einträge änderst oder löschst.</div></div></div>`);
   R+=`<div class="panel"><div class="ph"><h2>Hinweise</h2></div>${hl.join('')}</div>`;
@@ -713,7 +714,7 @@ function viewAdmin(){
   <div class="panel"><div class="ph"><h2>Kategorien</h2></div>
    ${cats().map(c=>{const used=S.entries.some(e=>e.kat===c); return `<div class="kvrow"><span>${esc(c)}</span>${used?'<span class="hint" style="margin:0">in Verwendung</span>':`<button class="btn sec sm" data-delcat="${esc(c)}">Entfernen</button>`}</div>`;}).join('')}
    <form data-addcat class="actions"><input name="c" placeholder="Neue Kategorie" style="flex:1"><button class="btn sm">Hinzufügen</button></form></div>
-  <div class="panel"><div class="ph"><h2>Backup</h2></div><div class="actions" style="margin-top:0"><button class="btn sec sm" data-act="export">Daten exportieren (JSON)</button><label class="btn sec sm" style="cursor:pointer">Importieren<input type="file" accept="application/json" data-import hidden></label><button class="btn sec sm" data-act="seed">Startdaten laden</button></div></div>
+  <div class="panel"><div class="ph"><h2>Backup</h2></div><div class="hint" style="margin:0 0 8px">${backupAge()==null?'Noch kein Backup gemacht.':'Letztes Backup: '+(backupAge()===0?'heute':'vor '+backupAge()+' Tagen')+'. Eine Erinnerung erscheint auf der Übersicht nach 14 Tagen.'}</div><div class="actions" style="margin-top:0"><button class="btn sec sm" data-act="export">Daten exportieren (JSON)</button><label class="btn sec sm" style="cursor:pointer">Importieren<input type="file" accept="application/json" data-import hidden></label><button class="btn sec sm" data-act="seed">Startdaten laden</button></div></div>
   </div><div>
   ${logPanel()}
   <div class="panel"><div class="ph"><h2>Eingefrorene Monate</h2></div>
@@ -1075,7 +1076,10 @@ async function seedData(){
 function exportData(){
   const blob=new Blob([JSON.stringify({version:1,exported:new Date().toISOString(),entries:S.entries,lohn:S.lohn,frozen:S.frozen,settings:S.settings},null,1)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='budget-backup-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  if(isAdmin()){ backend.set('settings','main',{...S.settings,lastBackup:Date.now()}); logEv('Backup','Datensicherung (JSON) heruntergeladen'); }
+  toast('Backup gespeichert');
 }
+const backupAge = () => S.settings.lastBackup ? Math.floor((Date.now()-S.settings.lastBackup)/864e5) : null;
 async function importData(file){
   try{
     const d=JSON.parse(await file.text()); const ops=[];
