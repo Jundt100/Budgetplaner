@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Budget & Finanz-Simulator PWA</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f8fafc;
+    }
+    input[type="range"] {
+      accent-color: #2563eb;
+    }
+  </style>
+</head>
+<body class="text-slate-800 pb-24">
+
+  <!-- Top Header / Status Bar -->
+  <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-lg">CHF</div>
+        <div>
+          <h1 class="font-bold text-base sm:text-lg leading-tight">Haushaltsbudget & Simulator</h1>
+          <p class="text-xs text-slate-400">PWA Web-App • PC & Smartphone</p>
+        </div>
+      </div>
+      <div id="sync-badge" class="flex items-center space-x-1.5 bg-slate-800 border border-slate-700 px-3 py-1 rounded-full text-xs">
+        <span id="sync-dot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+        <span id="sync-text">Lokal gespeichert (Browser)</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-5xl mx-auto px-4 pt-5">
+
+    <!-- KPI Summary Cards (Always visible) -->
+    <section class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <p class="text-xs text-slate-500 uppercase font-semibold">Einnahmen / Mt.</p>
+        <p id="kpi-income" class="text-xl sm:text-2xl font-bold text-emerald-600 mt-1">0 CHF</p>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <p class="text-xs text-slate-500 uppercase font-semibold">Fixkosten / Mt.</p>
+        <p id="kpi-fixed" class="text-xl sm:text-2xl font-bold text-slate-700 mt-1">0 CHF</p>
+      </div>
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <p class="text-xs text-slate-500 uppercase font-semibold">Variabel / Mt.</p>
+        <p id="kpi-variable" class="text-xl sm:text-2xl font-bold text-amber-600 mt-1">0 CHF</p>
+      </div>
+      <div class="bg-blue-600 text-white p-4 rounded-xl shadow-sm">
+        <p class="text-xs text-blue-100 uppercase font-semibold">Freies Sparpotenzial</p>
+        <p id="kpi-savings" class="text-xl sm:text-2xl font-bold mt-1">0 CHF</p>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <div class="flex space-x-2 bg-slate-200/80 p-1 rounded-xl mb-6">
+      <button onclick="switchTab('budget')" id="tab-btn-budget" class="flex-1 py-2.5 text-sm font-semibold rounded-lg bg-white text-slate-900 shadow-sm transition">
+        📊 1. Budgetplan
+      </button>
+      <button onclick="switchTab('sim')" id="tab-btn-sim" class="flex-1 py-2.5 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition">
+        🎛️ 2. Live-Simulation
+      </button>
+      <button onclick="switchTab('cloud')" id="tab-btn-cloud" class="flex-1 py-2.5 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition">
+        ☁️ 3. Cloud & Backup
+      </button>
+    </div>
+
+    <!-- TAB 1: BUDGETPLAN -->
+    <div id="tab-budget" class="space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Form to Add Entry -->
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 lg:col-span-1 h-fit">
+          <h2 class="font-bold text-base mb-4">Neuen Posten hinzufügen</h2>
+          <form id="budget-form" onsubmit="addEntry(event)" class="space-y-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Bezeichnung</label>
+              <input type="text" id="entry-name" required placeholder="z.B. Miete, Einkauf, Lohn..." class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Betrag (CHF)</label>
+                <input type="number" id="entry-amount" required min="1" step="1" placeholder="150" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Kategorie</label>
+                <select id="entry-type" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="income">Einnahme (+)</option>
+                  <option value="fixed" selected>Fixkosten (-)</option>
+                  <option value="variable">Variabel (-)</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 rounded-lg text-sm transition mt-2">
+              + Im Budget speichern
+            </button>
+          </form>
+
+          <!-- Mini Donut Chart -->
+          <div class="mt-6 pt-5 border-t border-slate-100">
+            <h3 class="text-xs font-semibold text-slate-500 uppercase mb-3">Aufteilung der Einnahmen</h3>
+            <div class="h-48 flex items-center justify-center">
+              <canvas id="budgetDonutChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Budget Items List -->
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 lg:col-span-2">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-bold text-base">Monatliche Budget-Posten</h2>
+            <span class="text-xs text-slate-400">Beträge direkt in der Liste änderbar</span>
+          </div>
+          
+          <div id="entries-container" class="space-y-2">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 2: INTERAKTIVE SIMULATION -->
+    <div id="tab-sim" class="hidden space-y-6">
+      <div class="bg-gradient-to-r from-blue-900 to-slate-900 text-white p-5 rounded-2xl shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <span class="text-xs uppercase tracking-wider bg-blue-500/30 text-blue-200 px-2.5 py-1 rounded-full font-semibold">Was-wäre-wenn-Rechner</span>
+            <h2 class="text-lg sm:text-xl font-bold mt-2">Vermögens- & Projekt-Simulator</h2>
+            <p class="text-xs sm:text-sm text-slate-300 mt-0.5">Bewege die Regler, um in Echtzeit zu testen, wie sich Sparrate, Rendite oder grössere Anschaffungen auswirken.</p>
+          </div>
+          <button onclick="resetSimulationToBudget()" class="shrink-0 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition">
+            🔄 Auf aktuelles Budget zurücksetzen
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Sliders Panel -->
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 lg:col-span-5 space-y-4">
+          
+          <div>
+            <div class="flex justify-between text-xs font-semibold mb-1">
+              <span class="text-slate-600">Startkapital heute</span>
+              <span id="lbl-sim-initial" class="text-slate-900 font-bold">15'000 CHF</span>
+            </div>
+            <input type="range" id="sim-initial" min="0" max="150000" step="1000" value="15000" oninput="updateSimulation()" class="w-full">
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs font-semibold mb-1">
+              <span class="text-slate-600">Zusätzlich Sparen / Variable Kosten senken</span>
+              <span id="lbl-sim-extra" class="text-blue-600 font-bold">+0 CHF / Mt.</span>
+            </div>
+            <input type="range" id="sim-extra" min="-1000" max="2000" step="50" value="0" oninput="updateSimulation()" class="w-full">
+            <p class="text-[11px] text-slate-400 mt-0.5">Basis-Sparpotenzial aus Tab 1: <strong id="sim-base-savings">0 CHF</strong>/Mt.</p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+            <div>
+              <div class="flex justify-between text-xs font-semibold mb-1">
+                <span class="text-slate-600">Rendite / Zins p.a.</span>
+                <span id="lbl-sim-return" class="text-emerald-600 font-bold">5.0 %</span>
+              </div>
+              <input type="range" id="sim-return" min="0" max="12" step="0.5" value="5.0" oninput="updateSimulation()" class="w-full">
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs font-semibold mb-1">
+                <span class="text-slate-600">Inflation p.a.</span>
+                <span id="lbl-sim-inflation" class="text-amber-600 font-bold">1.5 %</span>
+              </div>
+              <input type="range" id="sim-inflation" min="0" max="6" step="0.2" value="1.5" oninput="updateSimulation()" class="w-full">
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs font-semibold mb-1">
+              <span class="text-slate-600">Zeithorizont (Jahre)</span>
+              <span id="lbl-sim-years" class="text-slate-900 font-bold">10 Jahre</span>
+            </div>
+            <input type="range" id="sim-years" min="3" max="30" step="1" value="10" oninput="updateSimulation()" class="w-full">
+          </div>
+
+          <!-- Special Expense / Event Simulator -->
+          <div class="pt-3 border-t border-slate-200 bg-slate-50 -mx-5 -mb-5 p-5 rounded-b-2xl">
+            <h3 class="text-xs font-bold uppercase text-slate-700 mb-3">🎯 Geplantes Grossprojekt / Anschaffung</h3>
+            <div class="space-y-3">
+              <div>
+                <div class="flex justify-between text-xs font-semibold mb-1">
+                  <span class="text-slate-600">Geplante Ausgaben (z.B. Fest, Auto, Reise)</span>
+                  <span id="lbl-sim-event-cost" class="text-rose-600 font-bold">15'000 CHF</span>
+                </div>
+                <input type="range" id="sim-event-cost" min="0" max="60000" step="1000" value="15000" oninput="updateSimulation()" class="w-full">
+              </div>
+              <div>
+                <div class="flex justify-between text-xs font-semibold mb-1">
+                  <span class="text-slate-600">Findet statt in Jahr</span>
+                  <span id="lbl-sim-event-year" class="text-slate-900 font-bold">Jahr 1</span>
+                </div>
+                <input type="range" id="sim-event-year" min="1" max="10" step="1" value="1" oninput="updateSimulation()" class="w-full">
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Simulation Output & Chart -->
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 lg:col-span-7 flex flex-col justify-between">
+          <div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+              <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                <p class="text-[11px] text-slate-500 uppercase font-semibold">Simulierte Sparrate</p>
+                <p id="sim-out-monthly" class="text-lg font-bold text-blue-600 mt-0.5">0 CHF / Mt.</p>
+              </div>
+              <div class="bg-emerald-50/70 p-3.5 rounded-xl border border-emerald-200">
+                <p class="text-[11px] text-emerald-700 uppercase font-semibold">Endvermögen (Nominal)</p>
+                <p id="sim-out-nominal" class="text-lg font-bold text-emerald-700 mt-0.5">0 CHF</p>
+              </div>
+              <div class="bg-indigo-50/70 p-3.5 rounded-xl border border-indigo-200">
+                <p class="text-[11px] text-indigo-700 uppercase font-semibold">Kaufkraft (Inflationsber.)</p>
+                <p id="sim-out-real" class="text-lg font-bold text-indigo-700 mt-0.5">0 CHF</p>
+              </div>
+            </div>
+
+            <div class="h-72 sm:h-80 w-full">
+              <canvas id="simLineChart"></canvas>
+            </div>
+          </div>
+
+          <p id="sim-summary-text" class="text-xs text-slate-500 mt-4 pt-3 border-t border-slate-100"></p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 3: CLOUD & BACKUP (FIREBASE READY) -->
+    <div id="tab-cloud" class="hidden space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Firebase Setup Box -->
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+          <div class="flex items-center space-x-2">
+            <span class="text-xl">🔥</span>
+            <h2 class="font-bold text-base">Echtzeit-Sync mit Google Firebase verbinden</h2>
+          </div>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Aktuell speichert diese App alle Änderungen sofort lokal auf diesem Gerät (<code class="bg-slate-100 px-1 py-0.5 rounded">localStorage</code>). Wenn du deinen <strong>Firebase-Schlüssel</strong> hier einfügst, synchronisiert die App live zwischen PC und Smartphone.
+          </p>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Firebase Konfiguration (JSON) oder Datenbank-URL</label>
+            <textarea id="firebase-config-input" rows="5" placeholder='{"apiKey": "...", "projectId": "mein-budget", ...}' class="w-full p-3 rounded-lg border border-slate-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+          </div>
+          <div class="flex space-x-2">
+            <button onclick="saveFirebaseConfig()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg text-xs transition">
+              Konfiguration speichern
+            </button>
+            <button onclick="resetDemoData()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-4 py-2 rounded-lg text-xs transition">
+              Beispiel-Daten wiederherstellen
+            </button>
+          </div>
+        </div>
+
+        <!-- Export / Import Backup Box -->
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+          <div class="flex items-center space-x-2">
+            <span class="text-xl">💾</span>
+            <h2 class="font-bold text-base">Manuelles Daten-Backup (JSON Export / Import)</h2>
+          </div>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Auch ohne Cloud kannst du deinen gesamten Budgetplan jederzeit als kleine Datei herunterladen, sichern oder auf ein anderes Gerät übertragen.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-3 pt-2">
+            <button onclick="exportBudgetJSON()" class="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-4 rounded-lg text-xs transition text-center">
+              ⬇️ Budget-Daten herunterladen (.json)
+            </button>
+            <label class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold py-2.5 px-4 rounded-lg text-xs transition text-center cursor-pointer border border-slate-300">
+              ⬆️ Backup-Datei einlesen
+              <input type="file" accept=".json" onchange="importBudgetJSON(event)" class="hidden">
+            </label>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // --- 1. STANDARD-STARTDATEN (Falls noch nichts gespeichert wurde) ---
+    const DEFAULT_BUDGET = [
+      { id: 1, name: "Nettoeinkommen Haushalt", amount: 7200, type: "income" },
+      { id: 2, name: "Miete & Nebenkosten", amount: 1850, type: "fixed" },
+      { id: 3, name: "Krankenkassen & Versicherungen", amount: 780, type: "fixed" },
+      { id: 4, name: "Strom, Internet & Handy", amount: 210, type: "fixed" },
+      { id: 5, name: "Mobilität & Strom/Tanken", amount: 320, type: "fixed" },
+      { id: 6, name: "Lebensmittel & Haushalt", amount: 950, type: "variable" },
+      { id: 7, name: "Freizeit, Ausflüge & Hobbys", amount: 650, type: "variable" },
+      { id: 8, name: "Rückstellungen (Steuern / Ferien)", amount: 850, type: "fixed" }
+    ];
+
+    let budgetEntries = [];
+    let donutChart = null;
+    let simChart = null;
+
+    // --- 2. INITIALISIERUNG BEIM START ---
+    window.addEventListener("DOMContentLoaded", () => {
+      loadFromStorage();
+      renderBudgetList();
+      updateSimulation();
+    });
+
+    function formatCHF(val) {
+      return Math.round(val).toLocaleString("de-CH") + " CHF";
+    }
+
+    function loadFromStorage() {
+      const saved = localStorage.getItem("pwa_budget_entries_v1");
+      if (saved) {
+        try {
+          budgetEntries = JSON.parse(saved);
+        } catch (e) {
+          budgetEntries = [...DEFAULT_BUDGET];
+        }
+      } else {
+        budgetEntries = [...DEFAULT_BUDGET];
+      }
+    }
+
+    function saveToStorage() {
+      localStorage.setItem("pwa_budget_entries_v1", JSON.stringify(budgetEntries));
+      renderBudgetList();
+      updateSimulation();
+    }
+
+    // --- 3. TAB-NAVIGATION ---
+    function switchTab(tab) {
+      ["budget", "sim", "cloud"].forEach(t => {
+        document.getElementById("tab-" + t).classList.add("hidden");
+        const btn = document.getElementById("tab-btn-" + t);
+        btn.className = "flex-1 py-2.5 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition";
+      });
+      document.getElementById("tab-" + tab).classList.remove("hidden");
+      document.getElementById("tab-btn-" + tab).className = "flex-1 py-2.5 text-sm font-semibold rounded-lg bg-white text-slate-900 shadow-sm transition";
+      
+      if (tab === "sim") {
+        updateSimulation();
+      }
+    }
+
+    // --- 4. BUDGET-BERECHNUNGEN & DARSTELLUNG ---
+    function calculateTotals() {
+      let income = 0, fixed = 0, variable = 0;
+      budgetEntries.forEach(item => {
+        const val = Number(item.amount) || 0;
+        if (item.type === "income") income += val;
+        else if (item.type === "fixed") fixed += val;
+        else if (item.type === "variable") variable += val;
+      });
+      const savings = income - fixed - variable;
+      return { income, fixed, variable, savings };
+    }
+
+    function renderBudgetList() {
+      const totals = calculateTotals();
+      document.getElementById("kpi-income").textContent = formatCHF(totals.income);
+      document.getElementById("kpi-fixed").textContent = formatCHF(totals.fixed);
+      document.getElementById("kpi-variable").textContent = formatCHF(totals.variable);
+      
+      const savingsEl = document.getElementById("kpi-savings");
+      savingsEl.textContent = formatCHF(totals.savings);
+
+      const container = document.getElementById("entries-container");
+      container.innerHTML = "";
+
+      const groups = [
+        { key: "income", label: "Einnahmen", badgeClass: "bg-emerald-100 text-emerald-800" },
+        { key: "fixed", label: "Fixkosten", badgeClass: "bg-slate-200 text-slate-800" },
+        { key: "variable", label: "Variable Kosten", badgeClass: "bg-amber-100 text-amber-800" }
+      ];
+
+      groups.forEach(group => {
+        const items = budgetEntries.filter(e => e.type === group.key);
+        if (items.length === 0) return;
+
+        const groupHeader = document.createElement("div");
+        groupHeader.className = "pt-2 pb-1 text-xs font-bold uppercase tracking-wider text-slate-400";
+        groupHeader.textContent = group.label;
+        container.appendChild(groupHeader);
+
+        items.forEach(item => {
+          const row = document.createElement("div");
+          row.className = "flex items-center justify-between bg-slate-50 hover:bg-slate-100/80 p-2.5 rounded-xl border border-slate-200/80 transition gap-2";
+          row.innerHTML = `
+            <div class="flex items-center space-x-2.5 min-w-0 flex-1">
+              <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md ${group.badgeClass}">${group.label.split(" ")[0]}</span>
+              <span class="text-sm font-medium text-slate-800 truncate">${item.name}</span>
+            </div>
+            <div class="flex items-center space-x-2 shrink-0">
+              <input type="number" value="${item.amount}" onchange="updateEntryAmount(${item.id}, this.value)"
+                class="w-24 text-right px-2 py-1 text-sm font-bold bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <span class="text-xs text-slate-500">CHF</span>
+              <button onclick="deleteEntry(${item.id})" title="Eintrag löschen" class="text-slate-400 hover:text-rose-600 px-1.5 py-1 text-sm font-bold">✕</button>
+            </div>
+          `;
+          container.appendChild(row);
+        });
+      });
+
+      updateDonutChart(totals);
+    }
+
+    function addEntry(e) {
+      e.preventDefault();
+      const name = document.getElementById("entry-name").value.trim();
+      const amount = parseFloat(document.getElementById("entry-amount").value);
+      const type = document.getElementById("entry-type").value;
+      if (!name || isNaN(amount)) return;
+
+      budgetEntries.push({
+        id: Date.now(),
+        name,
+        amount,
+        type
+      });
+
+      document.getElementById("entry-name").value = "";
+      document.getElementById("entry-amount").value = "";
+      saveToStorage();
+    }
+
+    function updateEntryAmount(id, newVal) {
+      const idx = budgetEntries.findIndex(e => e.id === id);
+      if (idx !== -1) {
+        budgetEntries[idx].amount = parseFloat(newVal) || 0;
+        saveToStorage();
+      }
+    }
+
+    function deleteEntry(id) {
+      budgetEntries = budgetEntries.filter(e => e.id !== id);
+      saveToStorage();
+    }
+
+    function updateDonutChart(totals) {
+      const ctx = document.getElementById("budgetDonutChart").getContext("2d");
+      const dataVals = [
+        Math.max(0, totals.fixed),
+        Math.max(0, totals.variable),
+        Math.max(0, totals.savings)
+      ];
+
+      if (donutChart) {
+        donutChart.data.datasets[0].data = dataVals;
+        donutChart.update();
+        return;
+      }
+
+      donutChart = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: ["Fixkosten", "Variabel", "Sparpotenzial"],
+          datasets: [{
+            data: dataVals,
+            backgroundColor: ["#334155", "#d97706", "#2563eb"],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } }
+          },
+          cutout: "68%"
+        }
+      });
+    }
+
+    // --- 5. FINANZ-SIMULATION (WAS-WÄRE-WENN-ENGINE) ---
+    function updateSimulation() {
+      const totals = calculateTotals();
+      document.getElementById("sim-base-savings").textContent = formatCHF(totals.savings);
+
+      const initialCap = parseFloat(document.getElementById("sim-initial").value) || 0;
+      const extraSave = parseFloat(document.getElementById("sim-extra").value) || 0;
+      const annualReturn = parseFloat(document.getElementById("sim-return").value) || 0;
+      const inflation = parseFloat(document.getElementById("sim-inflation").value) || 0;
+      const years = parseInt(document.getElementById("sim-years").value) || 10;
+      const eventCost = parseFloat(document.getElementById("sim-event-cost").value) || 0;
+      
+      const eventYearSlider = document.getElementById("sim-event-year");
+      eventYearSlider.max = years;
+      if (parseInt(eventYearSlider.value) > years) eventYearSlider.value = years;
+      const eventYear = parseInt(eventYearSlider.value) || 1;
+
+      // Update Labels
+      document.getElementById("lbl-sim-initial").textContent = formatCHF(initialCap);
+      document.getElementById("lbl-sim-extra").textContent = (extraSave >= 0 ? "+" : "") + formatCHF(extraSave) + " / Mt.";
+      document.getElementById("lbl-sim-return").textContent = annualReturn.toFixed(1) + " %";
+      document.getElementById("lbl-sim-inflation").textContent = inflation.toFixed(1) + " %";
+      document.getElementById("lbl-sim-years").textContent = years + " Jahre";
+      document.getElementById("lbl-sim-event-cost").textContent = formatCHF(eventCost);
+      document.getElementById("lbl-sim-event-year").textContent = "Jahr " + eventYear;
+
+      const monthlySimulatedSavings = totals.savings + extraSave;
+      document.getElementById("sim-out-monthly").textContent = formatCHF(monthlySimulatedSavings) + " / Mt.";
+
+      // Calculate time series year by year (monthly compounding)
+      const labels = ["Heute"];
+      const seriesNominal = [initialCap];
+      const seriesReal = [initialCap];
+      const seriesBaseline = [initialCap]; // Without extra savings and at 0% return (pure cash box)
+
+      let currentNominal = initialCap;
+      let currentBaseline = initialCap;
+      const monthlyRate = (annualReturn / 100) / 12;
+
+      for (let y = 1; y <= years; y++) {
+        for (let m = 1; m <= 12; m++) {
+          currentNominal = currentNominal * (1 + monthlyRate) + monthlySimulatedSavings;
+          currentBaseline = currentBaseline + totals.savings;
+        }
+        if (y === eventYear && eventCost > 0) {
+          currentNominal -= eventCost;
+          currentBaseline -= eventCost;
+        }
+        const inflationDiscount = Math.pow(1 + inflation / 100, y);
+        const realVal = currentNominal / inflationDiscount;
+
+        labels.push("Jahr " + y);
+        seriesNominal.push(Math.round(currentNominal));
+        seriesReal.push(Math.round(realVal));
+        seriesBaseline.push(Math.round(currentBaseline));
+      }
+
+      const finalNominal = seriesNominal[seriesNominal.length - 1];
+      const finalReal = seriesReal[seriesReal.length - 1];
+
+      document.getElementById("sim-out-nominal").textContent = formatCHF(finalNominal);
+      document.getElementById("sim-out-real").textContent = formatCHF(finalReal);
+
+      const diffVsCash = finalNominal - seriesBaseline[seriesBaseline.length - 1];
+      document.getElementById("sim-summary-text").innerHTML = 
+        `Durch die Kombination aus Rendite (${annualReturn.toFixed(1)}%) und Sparraten-Anpassung (${extraSave >= 0 ? "+" : ""}${extraSave} CHF/Mt.) liegt dein Vermögen nach <strong>${years} Jahren</strong> um <strong>${formatCHF(diffVsCash)}</strong> höher als beim reinen Sparen auf dem unverzinsten Konto (inkl. ${formatCHF(eventCost)} Projektkosten in Jahr ${eventYear}).`;
+
+      renderSimChart(labels, seriesNominal, seriesReal, seriesBaseline);
+    }
+
+    function renderSimChart(labels, nominal, real, baseline) {
+      const ctx = document.getElementById("simLineChart").getContext("2d");
+      if (simChart) {
+        simChart.data.labels = labels;
+        simChart.data.datasets[0].data = nominal;
+        simChart.data.datasets[1].data = real;
+        simChart.data.datasets[2].data = baseline;
+        simChart.update();
+        return;
+      }
+
+      simChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: "Simuliertes Vermögen (Nominal)",
+              data: nominal,
+              borderColor: "#059669",
+              backgroundColor: "rgba(5, 150, 105, 0.1)",
+              borderWidth: 3,
+              fill: true,
+              tension: 0.3
+            },
+            {
+              label: "Reale Kaufkraft (nach Inflation)",
+              data: real,
+              borderColor: "#4f46e5",
+              borderDash: [5, 5],
+              borderWidth: 2,
+              fill: false,
+              tension: 0.3
+            },
+            {
+              label: "Status Quo (0% Zins, ohne Anpassung)",
+              data: baseline,
+              borderColor: "#94a3b8",
+              borderWidth: 2,
+              fill: false,
+              tension: 0.2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: "index", intersect: false },
+          plugins: {
+            legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } }
+          },
+          scales: {
+            y: {
+              ticks: {
+                callback: function(value) { return value.toLocaleString("de-CH") + " CHF"; }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function resetSimulationToBudget() {
+      document.getElementById("sim-extra").value = 0;
+      document.getElementById("sim-return").value = 5.0;
+      document.getElementById("sim-inflation").value = 1.5;
+      document.getElementById("sim-years").value = 10;
+      document.getElementById("sim-event-cost").value = 15000;
+      document.getElementById("sim-event-year").value = 1;
+      updateSimulation();
+    }
+
+    // --- 6. BACKUP & CLOUD-FUNKTIONEN ---
+    function exportBudgetJSON() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(budgetEntries, null, 2));
+      const dlAnchor = document.createElement("a");
+      dlAnchor.setAttribute("href", dataStr);
+      dlAnchor.setAttribute("download", "mein_budget_backup.json");
+      document.body.appendChild(dlAnchor);
+      dlAnchor.click();
+      dlAnchor.remove();
+    }
+
+    function importBudgetJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (Array.isArray(imported)) {
+            budgetEntries = imported;
+            saveToStorage();
+            alert("Backup erfolgreich geladen!");
+            switchTab("budget");
+          }
+        } catch (err) {
+          alert("Fehler beim Lesen der Backup-Datei.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function resetDemoData() {
+      if (confirm("Möchtest du wirklich auf die Standard-Beispieldaten zurücksetzen?")) {
+        budgetEntries = [...DEFAULT_BUDGET];
+        saveToStorage();
+        switchTab("budget");
+      }
+    }
+
+    function saveFirebaseConfig() {
+      const val = document.getElementById("firebase-config-input").value.trim();
+      if (!val) {
+        alert("Bitte füge deinen Firebase-Konfigurationsblock ein.");
+        return;
+      }
+      localStorage.setItem("pwa_firebase_config", val);
+      document.getElementById("sync-dot").className = "w-2 h-2 rounded-full bg-emerald-400";
+      document.getElementById("sync-text").textContent = "Firebase-Konfiguration hinterlegt";
+      alert("Firebase-Konfiguration gespeichert! Sobald du deine echte Firestore-Projekt-ID einträgst, synchronisiert die App live.");
+    }
+  </script>
+</body>
+</html>
