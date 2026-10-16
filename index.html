@@ -536,12 +536,12 @@ function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('on'
 
 /* ============ Daten-Schicht ============ */
 const ADMIN_EMAIL = 'jundt.nicola.elia@gmail.com';
-let S = {entries:[], lohn:{}, frozen:{}, frozenV:{}, settings:{}, log:[], rawLohn:{}, rawLohnV:{}};
+let S = {entries:[], lohn:{}, frozen:{}, frozenV:{}, settings:{}, log:[], backups:[], rawLohn:{}, rawLohnV:{}};
 let backend = null;
 let ready = false;
 const isAdmin = () => !backend || backend.role !== 'v';
 /* Spalten: lohn (nur Nicola, Admin) · lohnV (Vanessa) · frozen (komplett, Admin) · frozenV (nur Vanessas Sicht) · log (Protokoll) */
-const emptyCache = () => ({entries:{},lohn:{},lohnV:{},frozen:{},frozenV:{},settings:{},log:{}});
+const emptyCache = () => ({entries:{},lohn:{},lohnV:{},frozen:{},frozenV:{},settings:{},log:{},backups:{}});
 const vView = fr => ({key:fr.key, items:(fr.items||[]).filter(i=>i.wer!=='NJ').map(i=>({...i,n:0})), lohnV:fr.lohnV||0, at:fr.at||Date.now()});
 function buildS(c, role){
   const lohn={};
@@ -553,7 +553,8 @@ function buildS(c, role){
   if(role==='v') for(const [k,o] of Object.entries(c.frozenV)) frozen[k]={key:o.key,items:o.items||[],lohnN:0,lohnV:o.lohnV||0,at:o.at};
   else frozen={...c.frozen};
   return {entries, lohn, frozen, frozenV:{...c.frozenV}, settings:c.settings.main||{}, rawLohn:{...c.lohn}, rawLohnV:{...c.lohnV},
-    log:role==='v'?[]:Object.entries(c.log).map(([id,o])=>({...o,id})).sort((a,b)=>b.at-a.at)};
+    log:role==='v'?[]:Object.entries(c.log).map(([id,o])=>({...o,id})).sort((a,b)=>b.at-a.at),
+    backups:role==='v'?[]:Object.entries(c.backups||{}).map(([id,o])=>({...o,id})).sort((a,b)=>b.at-a.at)};
 }
 
 function LocalBackend(){
@@ -601,7 +602,7 @@ async function FirebaseBackend(cfg){
     async start(onData,onError){
       b.onData=onData;
       const adm=b.role==='admin';
-      const cols = adm ? ['entries','lohn','lohnV','frozen','frozenV','settings','log'] : ['entries','lohnV','frozenV','settings'];
+      const cols = adm ? ['entries','lohn','lohnV','frozen','frozenV','settings','log','backups'] : ['entries','lohnV','frozenV','settings'];
       for(const col of cols){
         const c = F.collection(db,'households',HOUSEHOLD,col);
         /* Regeln sind keine Filter: Vanessas Abfrage muss die erlaubte Einschränkung selbst enthalten */
@@ -865,7 +866,7 @@ function viewEntries(){
 
 /* ============ Admin / Verwaltung ============ */
 /* ============ Einstellungen ============ */
-const APP_VERSION='2026.10.16-3';
+const APP_VERSION='2026.10.16-4';
 const autoUpd = () => lsGet('budget_autoupd','1')!=='0';
 function installPanel(){
   const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
@@ -926,7 +927,7 @@ function viewAdmin(){
      ${frozenKeys.length?frozenKeys.map(k=>{const c=calc(S.frozen[k]); return `<div class="kvrow"><span>🔒 ${label(k)}<span class="hint" style="display:block;margin:0">Einnahmen ${fmt0(c.H.ein)} · Ausgaben ${fmt0(c.H.ausg)} · Sparen ${fmt0(c.H.spar)}</span></span><span><button class="btn sec sm" data-fedit="${k}">Bearbeiten</button> <button class="btn sec sm" data-refreeze="${k}" title="Aus heutigen Einträgen neu bilden">Neu berechnen</button></span></div>`;}).join(''):'<div class="empty">Noch nichts eingefroren (passiert automatisch ab dem nächsten Monat).</div>'}
      ${unlocked.length?`<div class="hint" style="margin-top:10px">Entsperrt (rechnen live mit den Einträgen):</div>`+unlocked.map(k=>`<div class="kvrow"><span>🔓 ${label(k)}</span><button class="btn sec sm" data-relock="${k}">Wieder sperren</button></div>`).join(''):''}</div>`;
   } else if(k==='daten'){
-    body=`<div class="panel"><div class="ph"><h2>Backup</h2></div><div class="hint" style="margin:0 0 8px">${backupAge()==null?'Noch kein Backup gemacht.':'Letztes Backup: '+(backupAge()===0?'heute':'vor '+backupAge()+' Tagen')+'. Eine Erinnerung erscheint auf der Übersicht nach 14 Tagen.'}</div><div class="actions" style="margin-top:0"><button class="btn sm" data-act="export">Daten sichern (JSON)</button><label class="btn sec sm" style="cursor:pointer">Importieren<input type="file" accept="application/json" data-import hidden></label><button class="btn sec sm" data-act="seed">Startdaten laden</button></div></div>
+    body=backupPanel()+`
      <div class="panel"><div class="ph"><h2>So funktioniert es</h2></div><div class="hint" style="line-height:1.7"><b>Monatlich</b>: läuft jeden Monat weiter, bis «Bis» gesetzt ist.<br><b>Einmalig</b>: zählt nur in seinem Monat.<br><b>Jährlich</b>: Jahresbetrag, ÷ 12 ans Jahreskonto.<br><b>Einkaufskonto</b>: Miete, Nebenkosten, Parkplatz und Einkauf (im Eintrag «Bezahlt über»).<br><b>Zahlung Nicola ↔ Vanessa</b>: einmalige Überweisung, z. B. geliehenes Geld.<br><b>Abo beenden</b>: ✎ → «Beenden». <b>Preis ändert sich</b>: ✎ → «Betrag ab Monat ändern».</div></div>`;
   } else if(k==='log') body=logPanel();
   else if(k==='app') body=updatePanel()+installPanel();
@@ -1134,6 +1135,15 @@ document.addEventListener('click', async ev=>{
     else if(a==='install'){ const ev=ui.installEvt; if(ev){ ev.prompt(); await ev.userChoice.catch(()=>{}); ui.installEvt=null; render(); } }
     else if(a==='toggle-role'){ lsSet('budget_role', isAdmin()?'v':'admin'); location.reload(); }
     else if(a==='export') exportData();
+    else if(a==='ab-now') await autoBackup('manual');
+    else if(a==='ab-dl'){ const b=S.backups.find(x=>x.id===d.id); if(b){ try{ download('budget-backup-'+new Date(b.at).toISOString().slice(0,10)+'.json', fullJson(JSON.parse(b.d))); }catch{ toast('Datei konnte nicht erstellt werden'); } } }
+    else if(a==='ab-restore'){ const b=S.backups.find(x=>x.id===d.id); if(b){ let snap; try{ snap=JSON.parse(b.d); }catch{ toast('Sicherung beschädigt'); return; } await restoreSnap(snap,'die Sicherung vom '+dtFmt(b.at)); } }
+    else if(a==='folder-pick'){
+      try{ const h=await window.showDirectoryPicker({mode:'readwrite',id:'budgetbackup'}); await idbPut('dir',h); await loadFolder(); const ok=await folderWrite(snapshot(),true); if(ok) toast('Ordner eingerichtet, erste Datei geschrieben'); render(); }
+      catch(e){ if(e&&e.name!=='AbortError') toast('Ordner konnte nicht gewählt werden'); }
+    }
+    else if(a==='folder-allow'){ const ok=await folderWrite(snapshot(),true); toast(ok?'Datei in den Ordner geschrieben':'Zugriff nicht erteilt'); render(); }
+    else if(a==='folder-clear'){ await idbPut('dir',undefined); ui.folder=null; lsDel('budget_folder_last'); render(); }
     else if(a==='cleanup'){
       const exp=S.entries.filter(e=>status(e,nowKey())==='past'&&canEdit(e));
       if(!exp.length) return;
@@ -1178,6 +1188,7 @@ document.addEventListener('change', async ev=>{
   if(t.matches('[data-mpick]')){ const k=fromInput(t.value); if(k) go(()=>{ ui.key=k; ui.year=ymOf(k).y; ui.animate=true; render(); }); }
   else if(t.matches('[data-autoupd]')){ lsSet('budget_autoupd',t.checked?'1':'0'); toast(t.checked?'Automatisches Update an':'Automatisches Update aus'); if(t.checked) checkUpdate(false); }
   else if(t.matches('[data-fkat]')){ ui.fKat=t.value; render(); }
+  else if(t.matches('[data-abmode]')){ await backend.set('settings','main',{...S.settings,autoBackup:t.value}); logEv('Backup','Automatisches Backup: '+t.options[t.selectedIndex].text); if(t.value!=='off') autoBackup('auto'); }
   else if(t.matches('[data-fstat]')){ ui.fStat=t.value; render(); }
   else if(t.matches('[data-import]')){ if(t.files[0]) await importData(t.files[0]); t.value=''; }
   else if(t.matches('input[data-lohn]')){ const v=t.value===''?'':parseFloat(t.value); await saveLohn(+t.dataset.lohn,t.dataset.p,v); }
@@ -1297,7 +1308,8 @@ function viewDash(){
   const expired=S.entries.filter(e=>status(e,cur)==='past'&&canEdit(e));
   const ending=S.entries.filter(e=>!oneShot(e.art)&&e.bis!=null&&e.bis>=ui.key&&e.bis<=ui.key+1&&isActive(e,ui.key));
   const incompl=S.entries.filter(e=>!e.name||!(e.betrag>0));
-  if(adm){ const ba=backupAge(); if(ba==null||ba>=14) hl.push(`<div class="hl"><span class="ic">💾</span><div><b>${ba==null?'Noch kein Backup':'Letztes Backup vor '+ba+' Tagen'}</b> <button class="btn sec sm" data-act="export">Jetzt sichern</button></div></div>`); }
+  if(adm){ const ba=backupAge(); if(ba==null||ba>=14) hl.push(`<div class="hl"><span class="ic">💾</span><div><b>${ba==null?'Noch kein Backup':'Letztes Backup vor '+ba+' Tagen'}</b> <button class="btn sec sm" data-act="ab-now">Jetzt sichern</button></div></div>`);
+    if(ui.folder&&ui.folder.perm!=='granted'&&abMode()!=='off') hl.push(`<div class="hl"><span class="ic">📁</span><div><b>Backup-Ordner: Zugriff bestätigen</b> <button class="btn sec sm" data-act="folder-allow">Bestätigen</button></div></div>`); }
   if(expired.length) hl.push(`<div class="hl"><span class="ic">🧹</span><div><b>${expired.length} abgelaufene Einträge</b> <button class="btn sec sm" data-act="cleanup">Aufräumen</button></div></div>`);
   if(ending.length) hl.push(`<div class="hl"><span class="ic">⏳</span><div><b>Endet bald:</b> ${ending.map(e=>esc(e.name)+' ('+short(e.bis)+')').join(', ')}</div></div>`);
   if(incompl.length) hl.push(`<div class="hl"><span class="ic">⚠️</span><div><b>${incompl.length} unvollständige Einträge</b> (ohne Name oder Betrag)</div></div>`);
@@ -1458,16 +1470,121 @@ async function seedData(){
   if(!ops.length){ toast('Alles schon vorhanden'); return; }
   await backend.batch(ops); logEv('Startdaten',ops.length+' Einträge geladen'); toast(ops.length+' Einträge geladen');
 }
+/* ============ Backup (automatisch) ============ */
+const AB_DAYS={daily:1,weekly:7,monthly:30};
+const abMode = () => S.settings.autoBackup||'weekly';
+const AB_KEEP=20, FOLDER_KEEP=30;
+const snapshot = () => ({version:2, entries:S.entries, lohn:S.rawLohn, lohnV:S.rawLohnV, frozen:S.frozen, frozenV:S.frozenV, settings:S.settings});
+const fullJson = (snap) => JSON.stringify({...snap, exported:new Date().toISOString()},null,1);
+const dtFmt = t => new Date(t).toLocaleString('de-CH',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+const stamp = () => { const n=new Date(),p=x=>String(x).padStart(2,'0'); return ''+n.getFullYear()+p(n.getMonth()+1)+p(n.getDate())+'-'+p(n.getHours())+p(n.getMinutes())+p(n.getSeconds()); };
+const dayStr = () => new Date().toISOString().slice(0,10);
+function download(name,text){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'application/json'})); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
 function exportData(){
-  const blob=new Blob([JSON.stringify({version:1,exported:new Date().toISOString(),entries:S.entries,lohn:S.lohn,frozen:S.frozen,settings:S.settings},null,1)],{type:'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='budget-backup-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  download('budget-backup-'+dayStr()+'.json', fullJson(snapshot()));
   if(isAdmin()){ backend.set('settings','main',{...S.settings,lastBackup:Date.now()}); logEv('Backup','Datensicherung (JSON) heruntergeladen'); }
   toast('Backup gespeichert');
 }
-const backupAge = () => S.settings.lastBackup ? Math.floor((Date.now()-S.settings.lastBackup)/864e5) : null;
+const lastBk = () => (S.backups||[]).reduce((m,b)=>Math.max(m,b.at||0,b.ck||0), S.settings.lastBackup||0);
+const backupAge = () => { const t=lastBk(); return t?Math.floor((Date.now()-t)/864e5):null; };
+
+/* Ordner-Sicherung (Chrome/Edge am Computer): Ordner wird einmal gewählt, danach schreibt die App selbst */
+const folderOk = () => typeof window.showDirectoryPicker==='function';
+const idbOpen = () => new Promise((res,rej)=>{ const r=indexedDB.open('budget_bk',1); r.onupgradeneeded=()=>r.result.createObjectStore('k'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });
+const idbGet = async k => { const db=await idbOpen(); return new Promise((res,rej)=>{ const q=db.transaction('k').objectStore('k').get(k); q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error); }); };
+const idbPut = async (k,v) => { const db=await idbOpen(); return new Promise((res,rej)=>{ const t=db.transaction('k','readwrite'); v===undefined?t.objectStore('k').delete(k):t.objectStore('k').put(v,k); t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }); };
+async function loadFolder(){
+  ui.folder=null;
+  if(!folderOk()) return;
+  try{
+    const h=await idbGet('dir'); if(!h) return;
+    const p=await h.queryPermission({mode:'readwrite'});
+    ui.folder={h,name:h.name,perm:p};
+  }catch{ ui.folder=null; }
+}
+async function folderWrite(snap,ask){
+  const f=ui.folder; if(!f) return false;
+  try{
+    let p=await f.h.queryPermission({mode:'readwrite'});
+    if(p!=='granted' && ask) p=await f.h.requestPermission({mode:'readwrite'});
+    f.perm=p;
+    if(p!=='granted') return false;
+    const fh=await f.h.getFileHandle('budget-backup-'+dayStr()+'.json',{create:true});
+    const w=await fh.createWritable(); await w.write(fullJson(snap)); await w.close();
+    lsSet('budget_folder_last',String(Date.now()));
+    const names=[]; for await (const [n] of f.h.entries()) if(/^budget-backup-\d{4}-\d{2}-\d{2}\.json$/.test(n)) names.push(n);
+    names.sort().reverse().slice(FOLDER_KEEP).forEach(n=>f.h.removeEntry(n).catch(()=>{}));
+    return true;
+  }catch(e){ return false; }
+}
+let abBusy=false;
+/* kind: 'auto' (nur wenn fällig) · 'manual' · 'pre' (vor Wiederherstellung) */
+async function autoBackup(kind='auto'){
+  if(!isAdmin()||abBusy) return false;
+  abBusy=true;
+  try{
+    const mode=abMode(), now=Date.now(), days=AB_DAYS[mode]||7;
+    if(kind==='auto' && mode==='off') return false;
+    if(ui.folder===undefined) await loadFolder();
+    const snap=snapshot(), d=JSON.stringify(snap);
+    if(kind==='auto' && !S.entries.length && !Object.keys(S.frozen).length) return false;
+    const last=S.backups[0];
+    let fireDue = kind!=='auto' || !last || now-Math.max(last.at||0,last.ck||0) >= days*864e5-36e5;
+    let made=false;
+    if(fireDue){
+      if(kind==='auto' && last && last.d===d){ await backend.set('backups',last.id,{at:last.at,n:last.n,kind:last.kind,d:last.d,ck:now}); }
+      else if(d.length>900000){ toast('Backup zu gross für die Datenbank – bitte Datei-Backup nutzen'); }
+      else{
+        const id=stamp();
+        await backend.set('backups',id,{at:now,n:S.entries.length,kind:kind==='auto'?'auto':kind,d});
+        made=true;
+        const all=[{id},...S.backups].filter((b,i,a)=>a.findIndex(x=>x.id===b.id)===i);
+        const old=all.slice(AB_KEEP); if(old.length) await backend.batch(old.map(b=>({col:'backups',id:b.id,del:true})));
+        if(kind==='auto') logEv('Backup','Automatische Sicherung erstellt');
+      }
+    }
+    const folderDue = ui.folder && (kind!=='auto' ? true : (mode!=='off' && now-(+lsGet('budget_folder_last','0')) >= days*864e5-36e5));
+    let fok=null; if(folderDue) fok=await folderWrite(snap,kind==='manual');
+    if(kind==='manual') toast(made?(fok?'Backup gespeichert (Datenbank + Ordner)':'Backup in der Datenbank gespeichert'):'Backup konnte nicht erstellt werden');
+    return made;
+  }catch(e){ if(kind==='manual') toast('Backup fehlgeschlagen'); return false; }
+  finally{ abBusy=false; }
+}
+async function restoreSnap(d,label0){
+  if(!confirm(`Alle aktuellen Daten durch ${label0} ersetzen?\n\nVorher wird automatisch eine Sicherung des jetzigen Stands erstellt.`)) return;
+  await autoBackup('pre');
+  const ops=[];
+  const sync=(col,nu,oldKeys)=>{ oldKeys.forEach(k=>{ if(!(k in nu)) ops.push({col,id:k,del:true}); }); Object.entries(nu).forEach(([k,o])=>ops.push({col,id:k,obj:o})); };
+  const em={}; (d.entries||[]).forEach(e=>{ const {id,...o}=e; em[id||uid()]=o; });
+  sync('entries',em,S.entries.map(e=>e.id));
+  sync('lohn',d.lohn||{},Object.keys(S.rawLohn)); sync('lohnV',d.lohnV||{},Object.keys(S.rawLohnV));
+  sync('frozen',d.frozen||{},Object.keys(S.frozen)); sync('frozenV',d.frozenV||{},Object.keys(S.frozenV));
+  ops.push({col:'settings',id:'main',obj:{...(d.settings||{}),lastBackup:S.settings.lastBackup||Date.now()}});
+  await backend.batch(ops); logEv('Wiederhergestellt',label0+' (alle Daten ersetzt)'); toast('Wiederhergestellt');
+}
+function backupPanel(){
+  const ab=abMode(), f=ui.folder, ba=backupAge();
+  const modes=[['off','Aus'],['daily','Täglich'],['weekly','Wöchentlich'],['monthly','Monatlich']];
+  const kindLbl=b=>b.kind==='pre'?'↩︎ vor Wiederherstellung':b.kind==='manual'?'✋ manuell':'🕒 automatisch';
+  const rows=S.backups.map(b=>`<div class="kvrow"><span>${kindLbl(b)} · ${dtFmt(b.at)}<span class="hint" style="display:block;margin:0">${b.n} Einträge${b.ck&&b.ck>b.at+36e5?' · unverändert bestätigt '+dtFmt(b.ck):''}</span></span><span><button class="btn sec sm" data-act="ab-dl" data-id="${b.id}">Datei</button> <button class="btn sec sm" data-act="ab-restore" data-id="${b.id}">Wiederherstellen</button></span></div>`).join('');
+  const fold = !folderOk() ? `<div class="hint" style="margin:0">Ordner-Sicherung geht nur mit Chrome oder Edge am Computer. Auf dem Handy reicht das automatische Backup in der Datenbank plus gelegentlich «Daten sichern».</div>`
+    : `<div class="hint" style="margin:0 0 8px">Zusätzlich zur Datenbank schreibt die App die Sicherung als Datei in einen Ordner deiner Wahl, z. B. in iCloud Drive, Google Drive oder OneDrive. So hast du eine Kopie ausserhalb von Firebase. Es werden die letzten ${FOLDER_KEEP} Tage behalten.</div>
+      ${f?`<div class="kvrow"><span>📁 ${esc(f.name)}<span class="hint" style="display:block;margin:0">${f.perm==='granted'?'Zugriff erteilt':'Zugriff muss bestätigt werden'}${lsGet('budget_folder_last')?' · zuletzt '+dtFmt(+lsGet('budget_folder_last')):''}</span></span><span>${f.perm!=='granted'?'<button class="btn sm" data-act="folder-allow">Zugriff bestätigen</button> ':''}<button class="btn sec sm" data-act="folder-pick">Ändern</button> <button class="btn sec sm" data-act="folder-clear">Entfernen</button></span></div>`
+        :`<div class="actions" style="margin-top:0"><button class="btn sm" data-act="folder-pick">Ordner wählen</button></div>`}`;
+  return `<div class="panel"><div class="ph"><h2>Automatisches Backup</h2></div>
+   <div class="setrow"><div><b>Sicherung in der Datenbank</b><div class="hint" style="margin:0">Passiert von selbst, wenn du die App öffnest und die Sicherung fällig ist. Es werden die letzten ${AB_KEEP} behalten.${ba==null?' Noch keine Sicherung.':' Letzte Sicherung: '+(ba===0?'heute':'vor '+ba+' Tagen')+'.'}</div></div>
+    <select data-abmode>${modes.map(([v,l])=>`<option value="${v}" ${ab===v?'selected':''}>${l}</option>`).join('')}</select></div>
+   <div class="actions"><button class="btn sm" data-act="ab-now">Jetzt sichern</button><button class="btn sec sm" data-act="export">Als Datei laden</button><label class="btn sec sm" style="cursor:pointer">Datei einlesen<input type="file" accept="application/json" data-import hidden></label></div></div>
+   <div class="panel"><div class="ph"><h2>Sicherungen</h2></div>${rows||'<div class="empty">Noch keine Sicherung vorhanden.</div>'}</div>
+   <div class="panel"><div class="ph"><h2>Ordner-Sicherung</h2></div>${fold}</div>
+   <div class="panel"><div class="ph"><h2>Weitere</h2></div><div class="actions" style="margin-top:0"><button class="btn sec sm" data-act="seed">Startdaten laden</button></div></div>`;
+}
 async function importData(file){
   try{
     const d=JSON.parse(await file.text()); const ops=[];
+    if(d.version>=2 && d.lohnV!==undefined){ await restoreSnap(d,'die Datei «'+file.name+'»'); return; }
     const have=new Set(S.entries.map(e=>[e.art,e.kat,e.name,e.betrag,e.wer,e.ab].join('|')));
     (d.entries||[]).forEach(e=>{ const {id,...o}=e; if(!have.has([o.art,o.kat,o.name,o.betrag,o.wer,o.ab].join('|'))) ops.push({col:'entries',id:id||uid(),obj:o}); });
     Object.entries(d.lohn||{}).forEach(([k,o])=>ops.push(...lohnOps(k,o)));
@@ -1504,7 +1621,7 @@ async function saveLohn(k,p,val){
 
 
 async function startBackend(){
-  backend.onReady=async()=>{ ready=true; ui.phase='app'; await migrate(); await autoFreeze(); render(); };
+  backend.onReady=async()=>{ ready=true; ui.phase='app'; await migrate(); await autoFreeze(); render(); if(isAdmin()) autoBackup('auto'); };
   await backend.start(onData, err=>{
     if(err.code==='permission-denied'){ ui.phase='denied'; render(); }
     else { ui.err='Fehler: '+(err.code||err.message); render(); }
