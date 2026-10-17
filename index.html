@@ -488,6 +488,15 @@ aside.side button.nv:hover .i{transform:scale(1.14)}
 .fab svg{transition:transform .3s}.fab:hover svg{transform:rotate(90deg)}
 #modal.on~.fab,body:has(#modal.on) .fab{opacity:0;pointer-events:none}
 @media (max-width:899px){.fab{right:18px;bottom:calc(88px + env(safe-area-inset-bottom));width:58px;height:58px}}
+
+/* Phasen-Leiste */
+.phase{display:flex;align-items:center;gap:14px;padding:14px 18px;margin:0 0 16px;background:var(--panel);border:1px solid var(--glass-b);border-radius:18px;box-shadow:var(--shadow);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6)}
+.phase .pic{font-size:22px;line-height:1;flex:none}
+.phase .ptx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.phase .ptx b{font-size:15px}
+.phase .ptx span{font-size:13px;color:var(--muted);line-height:1.45}
+.phase .pbt{display:flex;gap:8px;flex-wrap:wrap;flex:none}
+@media (max-width:700px){.phase{flex-wrap:wrap;padding:12px 14px}.phase .pbt{width:100%}}
 </style>
 </head>
 <body>
@@ -525,6 +534,9 @@ const short = k => { const {y,m}=ymOf(k); return String(m).padStart(2,'0')+'.'+y
 const toInput = k => { if(k==null) return ''; const {y,m}=ymOf(k); return y+'-'+String(m).padStart(2,'0'); };
 const fromInput = s => { if(!s) return null; const [y,m]=s.split('-').map(Number); return MK(y,m); };
 const nowKey = () => { const d=new Date(); return MK(d.getFullYear(), d.getMonth()+1); };
+/* Planungsmonat = der Monat, den der Lohn dieses Monats (25.) finanziert */
+const planKey = () => nowKey()+1;
+const startKey = () => lsGet('budget_open','plan')==='now' ? nowKey() : planKey();
 const fmt = n => (Math.round((n+Number.EPSILON)*100)/100).toLocaleString('de-CH',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmt0 = n => Math.round(n).toLocaleString('de-CH');
 const chf = n => 'CHF ' + fmt(n);
@@ -779,7 +791,7 @@ function chart(labels, series){
 
 /* ============ UI-Zustand ============ */
 const ui = {
-  tab:'dash', key:nowKey(), scope:lsGet('budget_scope','all'), year:new Date().getFullYear(),
+  tab:'dash', key:startKey(), scope:lsGet('budget_scope','all'), year:new Date().getFullYear(),
   yview:'year', q:'', fKat:'', fStat:'on', user:null, phase:'boot', err:'', pending:false, focusId:null, animate:false, shown:false, cu:{}, flashId:null, logN:40, cview:lsGet('budget_cview','wave'), open:{}, sub:'', side:lsGet('budget_side','open')
 };
 const scopeLabel = {all:'Haushalt', NJ:'Nicola', VS:'Vanessa'};
@@ -799,6 +811,23 @@ function monthNav(){
   return `<div class="mnav"><button data-mshift="-1" aria-label="Vorheriger Monat">‹</button>
     <div class="lab" style="line-height:38px">${label(ui.key)}<input type="month" value="${toInput(ui.key)}" data-mpick aria-label="Monat wählen"></div>
     <button data-mshift="1" aria-label="Nächster Monat">›</button></div>`;
+}
+function lohnGot(k,sc){
+  const L=S.lohn[k]||{}, has=x=>x!=null&&x!=='';
+  if(!isAdmin()) return has(L.v);
+  return sc==='NJ'?has(L.n):sc==='VS'?has(L.v):(has(L.n)&&has(L.v));
+}
+function phaseBar(){
+  const k=ui.key, cur=nowKey(), pk=planKey(), pm=ymOf(k-1), pn=MONTHS[pm.m-1], got=lohnGot(k,ui.scope);
+  let ic='📅', t='', x='', btn='';
+  if(k<cur){ ic='🔒'; t=label(k)+' ist abgeschlossen'; x='Vergangene Monate sind eingefroren.'; }
+  else if(k===cur){ ic='▶︎'; t='Laufender Monat'; x=`Finanziert mit dem Lohn vom 25. ${pn}${got?' (eingetragen).':' – noch nicht unter Löhne eingetragen.'}`; }
+  else if(k===pk){ ic='🗓'; t='Planung · '+label(k); x=`Dieser Monat wird mit dem Lohn vom 25. ${pn} bezahlt. ${got?'Lohn ist eingetragen, die Einnahmen sind effektiv.':'Lohn noch nicht eingetragen: die Einnahmen sind <b>geschätzt</b> (Lohn des Vormonats). Nach dem Zahltag unter «Löhne» eintragen.'}`; }
+  else { ic='🗓'; t='Weiter in der Zukunft · '+label(k); x=`Wird mit dem Lohn vom 25. ${pn} bezahlt.`; }
+  if(k!==pk) btn+=`<button class="btn sec sm" data-gokey="${pk}">Zu ${MONTHS[ymOf(pk).m-1]}</button>`;
+  if(k===pk && cur>0) btn+=`<button class="btn sec sm" data-gokey="${cur}">Zu ${MONTHS[ymOf(cur).m-1]}</button>`;
+  if(k>=cur && !got) btn+=`<button class="btn sm" data-tab="lohn">Lohn eintragen</button>`;
+  return `<div class="phase"><span class="pic">${ic}</span><div class="ptx"><b>${t}</b><span>${x}</span></div><div class="pbt">${btn}</div></div>`;
 }
 function yearNav(){
   return `<div class="mnav"><button data-yshift="-1" aria-label="Vorheriges Jahr">‹</button><div class="lab" style="line-height:38px">${ui.year}</div><button data-yshift="1" aria-label="Nächstes Jahr">›</button></div>`;
@@ -842,7 +871,7 @@ function viewEntries(){
   if(ui.scope!=='all') list=list.filter(e=>{const s=shares(e.wer); return (ui.scope==='NJ'?s.n:s.v)>0;});
   const groups={}; list.forEach(e=>{const g=grpOf(e); (groups[g]=groups[g]||[]).push(e);});
   const order=[...cats(),'Lohn','Ausgleich']; Object.keys(groups).forEach(g=>{ if(!order.includes(g)) order.push(g); });
-  let h=topbar('Einträge',{month:true,scope:true});
+  let h=topbar('Einträge',{month:true,scope:true})+phaseBar();
   h+=`<div class="fbar"><input type="search" data-q placeholder="Suchen …" value="${esc(ui.q)}">
    <select data-fkat><option value="">Alle Kategorien</option>${[...cats(),'Lohn','Ausgleich'].map(c=>`<option value="${esc(c)}" ${ui.fKat===c?'selected':''}>${esc(grpName(c))}</option>`).join('')}</select>
    <select data-fstat>${[['on','Gültig im '+MONTHS[ymOf(k).m-1]],['all','Alle'],['past','Abgelaufen'],['future','Geplant']].map(([v,l])=>`<option value="${v}" ${ui.fStat===v?'selected':''}>${l}</option>`).join('')}</select>
@@ -866,7 +895,7 @@ function viewEntries(){
 
 /* ============ Admin / Verwaltung ============ */
 /* ============ Einstellungen ============ */
-const APP_VERSION='2026.10.16-4';
+const APP_VERSION='2026.10.17-1';
 const autoUpd = () => lsGet('budget_autoupd','1')!=='0';
 function installPanel(){
   const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
@@ -930,7 +959,7 @@ function viewAdmin(){
     body=backupPanel()+`
      <div class="panel"><div class="ph"><h2>So funktioniert es</h2></div><div class="hint" style="line-height:1.7"><b>Monatlich</b>: läuft jeden Monat weiter, bis «Bis» gesetzt ist.<br><b>Einmalig</b>: zählt nur in seinem Monat.<br><b>Jährlich</b>: Jahresbetrag, ÷ 12 ans Jahreskonto.<br><b>Einkaufskonto</b>: Miete, Nebenkosten, Parkplatz und Einkauf (im Eintrag «Bezahlt über»).<br><b>Zahlung Nicola ↔ Vanessa</b>: einmalige Überweisung, z. B. geliehenes Geld.<br><b>Abo beenden</b>: ✎ → «Beenden». <b>Preis ändert sich</b>: ✎ → «Betrag ab Monat ändern».</div></div>`;
   } else if(k==='log') body=logPanel();
-  else if(k==='app') body=updatePanel()+installPanel();
+  else if(k==='app') body=`<div class="panel"><div class="ph"><h2>Anzeige</h2></div><div class="setrow"><div><b>Beim Öffnen anzeigen</b><div class="hint" style="margin:0">Der Lohn vom 25. ${MONTHS[ymOf(nowKey()).m-1]} bezahlt den ${MONTHS[ymOf(planKey()).m-1]}. Mit «Planungsmonat» siehst du sofort den Monat, den du vor dem Zahltag planst.</div></div><select data-openmode><option value="plan" ${lsGet('budget_open','plan')!=='now'?'selected':''}>Planungsmonat (${MONTHS[ymOf(planKey()).m-1]})</option><option value="now" ${lsGet('budget_open','plan')==='now'?'selected':''}>Laufender Monat (${MONTHS[ymOf(nowKey()).m-1]})</option></select></div></div>`+updatePanel()+installPanel();
   else if(k==='export') body=`<div class="panel"><div class="ph"><h2>Export</h2></div><div class="hint" style="margin:0 0 8px">Monat oder Jahr als Excel-Tabelle (CSV) oder PDF, z. B. für die Steuererklärung.</div><div class="actions" style="margin-top:0"><button class="btn" data-act="export-open">Exportieren …</button></div></div>`;
   return `<div class="topbar"><button class="back" data-sub="">‹ Einstellungen</button><h1>${SETS[k][1]}</h1></div><div class="subpage">${body}</div>`;
 }
@@ -1098,7 +1127,7 @@ async function saveEntryField(row,f,val){
   logEv('Geändert',diffText(e,o));
 }
 document.addEventListener('click', async ev=>{
-  const t=ev.target.closest('[data-tab],[data-scope],[data-mshift],[data-yshift],[data-cview],[data-sub],[data-side],[data-edit],[data-act],[data-refreeze],[data-delcat],[data-delrow],[data-addin],[data-fedit],[data-relock]');
+  const t=ev.target.closest('[data-tab],[data-scope],[data-mshift],[data-yshift],[data-cview],[data-sub],[data-side],[data-edit],[data-act],[data-gokey],[data-refreeze],[data-delcat],[data-delrow],[data-addin],[data-fedit],[data-relock]');
   if(!t) return;
   const d=t.dataset;
   if(d.tab){ if(d.tab!==ui.tab||ui.sub) go(()=>{ ui.tab=d.tab; ui.sub=''; ui.animate=true; render(); window.scrollTo(0,0); }); }
@@ -1108,6 +1137,7 @@ document.addEventListener('click', async ev=>{
   else if(d.cview){ go(()=>{ ui.cview=d.cview; lsSet('budget_cview',d.cview); ui.keepScroll=true; render(); }); }
   else if(d.sub!==undefined){ go(()=>{ ui.sub=d.sub; render(); window.scrollTo(0,0); }); }
   else if(t.hasAttribute('data-side')){ ui.side=ui.side==='closed'?'open':'closed'; lsSet('budget_side',ui.side); const sh=$('.shell'); if(sh){ sh.classList.toggle('mini',ui.side==='closed'); sh.dataset.sig=sh.dataset.sig.replace(/(open|closed)$/,ui.side); sh.querySelector('aside.side').innerHTML=sideHtml(backend&&backend.mode==='firebase',backend&&backend.user?backend.user.email:''); sh.querySelectorAll('.nv').forEach(b=>b.classList.toggle('on',b.dataset.tab===ui.tab)); } }
+  else if(d.gokey){ go(()=>{ ui.key=+d.gokey; ui.year=ymOf(ui.key).y; ui.animate=true; ui.keepScroll=true; render(); }); }
   else if(d.edit){ openEntry(d.edit); }
   else if(d.fedit){ openFrozen(+d.fedit); }
   else if(d.refreeze){ await refreezeMonth(+d.refreeze); }
@@ -1188,6 +1218,7 @@ document.addEventListener('change', async ev=>{
   if(t.matches('[data-mpick]')){ const k=fromInput(t.value); if(k) go(()=>{ ui.key=k; ui.year=ymOf(k).y; ui.animate=true; render(); }); }
   else if(t.matches('[data-autoupd]')){ lsSet('budget_autoupd',t.checked?'1':'0'); toast(t.checked?'Automatisches Update an':'Automatisches Update aus'); if(t.checked) checkUpdate(false); }
   else if(t.matches('[data-fkat]')){ ui.fKat=t.value; render(); }
+  else if(t.matches('[data-openmode]')){ lsSet('budget_open',t.value); toast(t.value==='plan'?'App öffnet auf dem Planungsmonat':'App öffnet auf dem laufenden Monat'); }
   else if(t.matches('[data-abmode]')){ await backend.set('settings','main',{...S.settings,autoBackup:t.value}); logEv('Backup','Automatisches Backup: '+t.options[t.selectedIndex].text); if(t.value!=='off') autoBackup('auto'); }
   else if(t.matches('[data-fstat]')){ ui.fStat=t.value; render(); }
   else if(t.matches('[data-import]')){ if(t.files[0]) await importData(t.files[0]); t.value=''; }
@@ -1274,12 +1305,13 @@ const C_EIN='#34c759', C_AUS='#ff7a45';
 const payAmt = (it,sc) => { const own=sc==='NJ'?it.n:it.v, oth=sc==='NJ'?it.v:it.n; return own+(it.zahler===sc?oth:0); };
 const secOf = it => it.art==='Jährlich'?'steuer':it.art==='Monatlich'&&it.konto==='einkauf'?'ek':'mo';
 function viewDash(){
-  const md=monthData(ui.key), c=calc(md), sc=ui.scope, P=pick(c,sc), cur=nowKey(), adm=isAdmin();
+  const md=monthData(ui.key), c=calc(md), sc=ui.scope, P=pick(c,sc), cur=nowKey(), adm=isAdmin(), k0=ui.key;
   const empty = !S.entries.length && !Object.keys(S.lohn).length;
-  let h=`<div class="topbar"><h1>Übersicht</h1>${monthNav()}${scopeSeg()}</div>`;
+  let h=`<div class="topbar"><h1>Übersicht</h1>${monthNav()}${scopeSeg()}</div>`+phaseBar();
   if(empty) h+=adm?`<div class="panel"><div class="ph"><h2>Willkommen</h2></div><p style="margin:0 0 8px">Noch keine Daten. Lade deine Startdaten aus dem Excel oder lege mit <b>Eintrag</b> los.</p><div class="actions"><button class="btn" data-act="seed">Startdaten laden</button></div></div>`
     :`<div class="panel"><div class="ph"><h2>Willkommen</h2></div><p style="margin:0">Noch keine Einträge. Lege mit <b>＋ Eintrag</b> deine Fixkosten an und trage unter Löhne deinen Lohn ein.</p></div>`;
   const kp=[['ein','Einnahmen','ein'],['mo','Monatliche Ausgaben','mon'],['ek','Einkaufskonto','ek'],['spar','Sparen','spar'],['steuer','Jahreskonto','steuer']];
+  const est=!md.frozen && k0>=cur && !lohnGot(k0,sc);
   const sub=f=>{
     if(sc==='all') return `<span class="n">N ${fmt0(c.N[f])}</span> · <span class="v">V ${fmt0(c.V[f])}</span>`;
     if(f==='ein') return P.ausE>0.004?`inkl. ${fmt0(P.ausE)} Ausgleich`:'Lohn';
@@ -1288,7 +1320,7 @@ function viewDash(){
     if(f==='steuer') return 'Jahreskosten ÷ 12';
     return P.ein?'Sparquote '+(P.spar/P.ein*100).toFixed(1)+' %':'&nbsp;';
   };
-  h+=`<div class="kpis">`+kp.map(([f,l,cls])=>`<div class="kpi ${cls}"><div class="kl">${l}</div><div class="kv2 ${f==='spar'&&P[f]<0?'neg':''}" data-cu="${f}|${P[f]}">${chf(P[f])}</div><div class="ks">${sub(f)}</div></div>`).join('')+`</div>`;
+  h+=`<div class="kpis">`+kp.map(([f,l,cls])=>`<div class="kpi ${cls}"><div class="kl">${l}${f==='ein'&&est?' <i style="font-style:normal;opacity:.7">(geschätzt)</i>':''}</div><div class="kv2 ${f==='spar'&&P[f]<0?'neg':''}" data-cu="${f}|${P[f]}">${chf(P[f])}</div><div class="ks">${sub(f)}</div></div>`).join('')+`</div>`;
 
   const all=[...new Set([...cats(), ...Object.keys(c.cat)])];
   /* Ausgleich Nicola ↔ Vanessa */
@@ -1371,7 +1403,7 @@ function viewLohn(){
   <div class="lohn-head ${adm?'':'one'}"><span>Auszahlung am 25.</span>${adm?'<span>Nicola</span>':''}<span>Vanessa</span></div>`;
   for(let k=start;k<=end;k++){
     const o=S.lohn[k]||{}, b=lohnBase(k), lock=!adm&&S.frozen[k]?'disabled':'', pm=ymOf(k-1);
-    h+=`<div class="lohn-row ${adm?'':'one'} ${k===ui.key?'cur':''}"><span class="mo">${MONTHS[pm.m-1]} ${pm.y}${S.frozen[k]?' 🔒':''}<small>für ${label(k)}</small></span>
+    h+=`<div class="lohn-row ${adm?'':'one'} ${k===ui.key?'cur':''}"><span class="mo">${MONTHS[pm.m-1]} ${pm.y}${S.frozen[k]?' 🔒':''}<small>für ${label(k)}${k===cur+1?' · nächster Lohn':''}</small></span>
       ${adm?`<input type="number" step="any" inputmode="decimal" data-lohn="${k}" data-p="n" value="${o.n??''}" placeholder="${fmt0(b.n)}">`:''}
       <input type="number" step="any" inputmode="decimal" data-lohn="${k}" data-p="v" value="${o.v??''}" placeholder="${fmt0(b.v)}" ${lock}></div>`;
   }
