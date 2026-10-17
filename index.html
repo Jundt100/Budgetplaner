@@ -531,9 +531,9 @@ svg.donut{width:min(260px,100%);height:auto;overflow:visible}
 .dl-row b{min-width:62px;text-align:right}
 .dl-items{margin:2px 0 8px 22px;padding-left:10px;border-left:2px solid var(--line)}
 .minis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:0 0 6px}
-.mini{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:14px;background:var(--soft)}
-.mini span{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}.mini span i{width:9px;height:9px;border-radius:50%}
-.mini b{font-size:16px}.mini small{color:var(--muted);font-size:11.5px}
+.ymini{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:14px;background:var(--soft)}
+.ymini span{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}.ymini span i{width:9px;height:9px;border-radius:50%}
+.ymini b{font-size:16px}.ymini small{color:var(--muted);font-size:11.5px}
 .facts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .fact{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:14px;background:var(--soft);transition:transform .2s,box-shadow .2s,background-color .2s;min-width:0}
 .fact[data-ym]{cursor:pointer}
@@ -1559,7 +1559,7 @@ function viewYearPage(){
   const earn=(r,w)=>r.c[w].ein-r.c[w].ausE, ws=sc==='VS'?['V']:sc==='NJ'?['N']:['N','V'];
   const lser=ws.map(w=>({name:w==='N'?'Nicola':'Vanessa',color:w==='N'?C_N:C_V,values:cr.map(r=>earn(r,w))}));
   const lt=w=>sumBy(inc,r=>earn(r,w)), nm2=inc.filter(hasData).length||1, tN=lt('N'), tV=lt('V');
-  const tile=(c,l,v)=>`<div class="mini"><span><i style="background:${c}"></i>${l}</span><b>${chf(v)}</b><small>Ø ${fmt0(v/nm2)} / Monat</small></div>`;
+  const tile=(c,l,v)=>`<div class="ymini"><span><i style="background:${c}"></i>${l}</span><b>${chf(v)}</b><small>Ø ${fmt0(v/nm2)} / Monat</small></div>`;
   const loh=`<div class="panel"><div class="ph"><h2>Löhne &amp; Einnahmen</h2><span class="hint" style="margin:0">${ui.ymode==='ytd'?y+' bis heute':y}</span></div>
    <div class="minis">${ws.includes('N')?tile(C_N,'Nicola',tN):''}${ws.includes('V')?tile(C_V,'Vanessa',tV):''}${ws.length>1?tile('#8e8e93','Zusammen',tN+tV):''}</div>
    ${chart2(labels,lser,'stack',{keys,sel:selI})}</div>`;
