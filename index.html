@@ -548,6 +548,12 @@ table.t td.neg{color:#e0452f}
 svg.chart2 .selcol{fill:var(--accent-bg)}
 svg.chart2 .hit[data-ym],svg.chart2 .hit[data-yr]{cursor:pointer}
 .bars .row[data-ycat]:not([data-ycat=""]){cursor:pointer}
+
+.kpis.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:700px){.kpis.four{grid-template-columns:1fr 1fr}}
+.chip.adv{background:rgba(175,82,222,.16);color:#8e3fb5}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .chip.adv{color:#d9a3f5}}
+.settle.big{font-size:15.5px}
 </style>
 </head>
 <body>
@@ -767,8 +773,9 @@ function monthData(k){
   const l=lohnBase(k);
   return {key:k, items:liveItems(k), lohnN:l.n, lohnV:l.v, frozen:false};
 }
+const vHasJk = () => !!S.settings.vJk;
 function calc(md){
-  const z=()=>({ein:0,mon:0,ek:0,einm:0,steuer:0,spar:0,mo:0,ausg:0,ausE:0,ausA:0});
+  const z=()=>({ein:0,mon:0,ek:0,einm:0,steuer:0,res:0,spar:0,mo:0,ausg:0,ausE:0,ausA:0});
   const N=z(), V=z(), H=z(), cat={}, tr=[];
   N.ein=md.lohnN||0; V.ein=md.lohnV||0; H.ein=N.ein+V.ein;
   for(const it of md.items){
@@ -779,7 +786,8 @@ function calc(md){
       P.einm+=a; R.ein+=a; P.ausA+=a; R.ausE+=a; tr.push({name:it.name,von:it.von,amt:a,once:true}); continue;
     }
     const f = it.art==='Monatlich'?(it.konto==='einkauf'?'ek':'mon'):it.art==='Einmalig'?'einm':'steuer';
-    N[f]+=it.n; V[f]+=it.v; H[f]+=it.n+it.v;
+    if(f==='steuer' && !vHasJk()){ N.steuer+=it.n; H.steuer+=it.n; V.res+=it.v; H.res+=it.v; }   // Vanessa: Jahreskosten fließen ins Sparkonto
+    else { N[f]+=it.n; V[f]+=it.v; H[f]+=it.n+it.v; }
     const c=(cat[it.kat]=cat[it.kat]||{n:0,v:0}); c.n+=it.n; c.v+=it.v;
     if(it.zahler==='NJ' && it.v>0.004){ N[f]+=it.v; N.ein+=it.v; N.ausE+=it.v; V.ausA+=it.v; tr.push({name:it.name,von:'VS',amt:it.v}); }
     else if(it.zahler==='VS' && it.n>0.004){ V[f]+=it.n; V.ein+=it.n; V.ausE+=it.n; N.ausA+=it.n; tr.push({name:it.name,von:'NJ',amt:it.n}); }
@@ -857,7 +865,7 @@ const endChip = e => {
   if(e.bis>=ui.key && e.bis<=ui.key+1) return `<span class="chip end">⏳ endet ${MONTHS[ymOf(e.bis).m-1].slice(0,3)}</span>`;
   return '';
 };
-const chips = e => endChip(e)+ (e.konto==='einkauf'?'<span class="chip ek">Einkaufskonto</span>':'')+(e.wer==='50/50'&&e.art!=='Ausgleich'&&e.pv!=null&&+e.pv!==50?`<span class="chip">Vanessa ${+e.pv} %</span>`:'');
+const chips = e => endChip(e)+(e.zahler&&e.wer==='50/50'&&e.art!=='Ausgleich'?`<span class="chip adv">${WERN[e.zahler]} legt aus</span>`:'')+ (e.konto==='einkauf'?'<span class="chip ek">Einkaufskonto</span>':'')+(e.wer==='50/50'&&e.art!=='Ausgleich'&&e.pv!=null&&+e.pv!==50?`<span class="chip">Vanessa ${+e.pv} %</span>`:'');
 const ART_OPT = [['Monatlich','Monatlich'],['Einmalig','Einmalig'],['Jährlich','Jährlich'],['Lohn','Weitere Einnahme'],['Ausgleich:VS','Vanessa → Nicola'],['Ausgleich:NJ','Nicola → Vanessa']];
 const artSel = e => e.art==='Ausgleich'?'Ausgleich:'+(e.von||'VS'):e.art;
 
@@ -955,7 +963,7 @@ function viewEntries(){
 
 /* ============ Admin / Verwaltung ============ */
 /* ============ Einstellungen ============ */
-const APP_VERSION='2026.10.17-2';
+const APP_VERSION='2026.10.18-1';
 const autoUpd = () => lsGet('budget_autoupd','1')!=='0';
 function installPanel(){
   const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
@@ -984,7 +992,7 @@ function updatePanel(){
 }
 const SETS={
   konto:['🔐','Konto & Zugriff',()=>isAdmin()?(backend&&backend.mode==='firebase'?'Angemeldet':'Lokaler Modus'):'Dein Zugang'],
-  kat:['🏷','Kategorien',()=>cats().length+' Kategorien'],
+  kat:['🏷','Kategorien & Konten',()=>cats().length+' Kategorien'],
   monate:['🔒','Eingefrorene Monate',()=>Object.keys(S.frozen).length+' Monate'],
   daten:['💾','Daten & Backup',()=>{const a=backupAge(); return a==null?'Noch kein Backup':a===0?'Heute gesichert':'Vor '+a+' Tagen';}],
   log:['🕘','Änderungsprotokoll',()=>S.log.length+' Einträge'],
@@ -1007,7 +1015,8 @@ function viewAdmin(){
      (adm?`<div class="panel"><div class="ph"><h2>Zugriff</h2></div><div class="hint" style="line-height:1.6">Du bist Admin und siehst alles. <b>Vanessa</b> hat einen eigenen Zugang: Sie sieht nur ihre Einträge, ihren Anteil an geteilten Kosten und ihren Lohn. Das wird in den Firestore-Regeln erzwungen (Firebase → Firestore → Regeln). Ihre Google-E-Mail steht dort bei <code>vanessa()</code>.</div></div>`
       :`<div class="panel"><div class="ph"><h2>Dein Zugang</h2></div><div class="hint" style="line-height:1.6">Du siehst und bearbeitest deine eigenen Kosten und deinen Lohn. Geteilte Kosten siehst du mit deinem Anteil, Nicola verwaltet sie. Vergangene Monate sind gesperrt.</div></div>`);
   } else if(k==='kat'){
-    body=`<div class="panel"><div class="ph"><h2>Kategorien</h2></div>
+    body=`<div class="panel"><div class="ph"><h2>Jahreskonto</h2></div><div class="setrow"><div><b>Vanessa hat ein eigenes Jahreskonto</b><div class="hint" style="margin:0">Aus: Jahreskosten von Vanessa (÷ 12) fließen in ihr Sparkonto und erscheinen bei ihr als «für Jahreskosten gespart». Nicolas Jahreskonto bleibt wie es ist.</div></div><label class="switch"><input type="checkbox" data-vjk ${vHasJk()?'checked':''}><span></span></label></div></div>
+     <div class="panel"><div class="ph"><h2>Kategorien</h2></div>
      ${cats().map(c=>{const used=S.entries.some(e=>e.kat===c); return `<div class="kvrow"><span>${esc(c)}</span>${used?'<span class="hint" style="margin:0">in Verwendung</span>':`<button class="btn sec sm" data-delcat="${esc(c)}">Entfernen</button>`}</div>`;}).join('')}
      <form data-addcat class="actions"><input name="c" placeholder="Neue Kategorie" style="flex:1"><button class="btn sm">Hinzufügen</button></form></div>`;
   } else if(k==='monate'){
@@ -1284,6 +1293,7 @@ document.addEventListener('change', async ev=>{
   const t=ev.target;
   if(t.matches('[data-mpick]')){ const k=fromInput(t.value); if(k) go(()=>{ ui.key=k; ui.year=ymOf(k).y; ui.animate=true; render(); }); }
   else if(t.matches('[data-autoupd]')){ lsSet('budget_autoupd',t.checked?'1':'0'); toast(t.checked?'Automatisches Update an':'Automatisches Update aus'); if(t.checked) checkUpdate(false); }
+  else if(t.matches('[data-vjk]')){ await backend.set('settings','main',{...S.settings,vJk:t.checked}); logEv('Einstellung','Vanessa Jahreskonto: '+(t.checked?'ja':'nein (Sparkonto)')); }
   else if(t.matches('[data-fkat]')){ ui.fKat=t.value; render(); }
   else if(t.matches('[data-openmode]')){ lsSet('budget_open',t.value); toast(t.value==='plan'?'App öffnet auf dem Planungsmonat':'App öffnet auf dem laufenden Monat'); }
   else if(t.matches('[data-abmode]')){ await backend.set('settings','main',{...S.settings,autoBackup:t.value}); logEv('Backup','Automatisches Backup: '+t.options[t.selectedIndex].text); if(t.value!=='off') autoBackup('auto'); }
@@ -1385,7 +1395,8 @@ function viewDash(){
   let h=`<div class="topbar"><h1>Übersicht</h1>${monthNav()}${scopeSeg()}</div>`+phaseBar();
   if(empty) h+=adm?`<div class="panel"><div class="ph"><h2>Willkommen</h2></div><p style="margin:0 0 8px">Noch keine Daten. Lade deine Startdaten aus dem Excel oder lege mit <b>Eintrag</b> los.</p><div class="actions"><button class="btn" data-act="seed">Startdaten laden</button></div></div>`
     :`<div class="panel"><div class="ph"><h2>Willkommen</h2></div><p style="margin:0">Noch keine Einträge. Lege mit <b>＋ Eintrag</b> deine Fixkosten an und trage unter Löhne deinen Lohn ein.</p></div>`;
-  const kp=[['ein','Einnahmen','ein'],['mo','Monatliche Ausgaben','mon'],['ek','Einkaufskonto','ek'],['spar','Sparen','spar'],['steuer','Jahreskonto','steuer']];
+  let kp=[['ein','Einnahmen','ein'],['mo','Monatliche Ausgaben','mon'],['ek','Einkaufskonto','ek'],['spar','Sparen','spar'],['steuer','Jahreskonto','steuer']];
+  const noJk = sc==='VS' && !vHasJk(); if(noJk) kp=kp.filter(x=>x[0]!=='steuer');
   const est=!md.frozen && k0>=cur && !lohnGot(k0,sc);
   const sub=f=>{
     if(sc==='all') return `<span class="n">N ${fmt0(c.N[f])}</span> · <span class="v">V ${fmt0(c.V[f])}</span>`;
@@ -1393,9 +1404,10 @@ function viewDash(){
     if(f==='mo') return P.einm>0.004?`davon ${fmt0(P.einm)} einmalig`:'Fixkosten';
     if(f==='ek') return 'Miete &amp; Einkauf';
     if(f==='steuer') return 'Jahreskosten ÷ 12';
+    if(f==='spar' && P.res>0.004 && sc!=='all') return `inkl. ${fmt0(P.res)} für Jahreskosten`;
     return P.ein?'Sparquote '+(P.spar/P.ein*100).toFixed(1)+' %':'&nbsp;';
   };
-  h+=`<div class="kpis">`+kp.map(([f,l,cls])=>`<div class="kpi ${cls}"><div class="kl">${l}${f==='ein'&&est?' <i style="font-style:normal;opacity:.7">(geschätzt)</i>':''}</div><div class="kv2 ${f==='spar'&&P[f]<0?'neg':''}" data-cu="${f}|${P[f]}">${chf(P[f])}</div><div class="ks">${sub(f)}</div></div>`).join('')+`</div>`;
+  h+=`<div class="kpis ${kp.length===4?'four':''}">`+kp.map(([f,l,cls])=>`<div class="kpi ${cls}"><div class="kl">${l}${f==='ein'&&est?' <i style="font-style:normal;opacity:.7">(geschätzt)</i>':''}</div><div class="kv2 ${f==='spar'&&P[f]<0?'neg':''}" data-cu="${f}|${P[f]}">${chf(P[f])}</div><div class="ks">${sub(f)}</div></div>`).join('')+`</div>`;
 
   const all=[...new Set([...cats(), ...Object.keys(c.cat)])];
   /* Ausgleich Nicola ↔ Vanessa */
@@ -1404,11 +1416,11 @@ function viewDash(){
     if(!c.tr.length) return '';
     const row=t=>`<div class="pl nolink"><span class="t">${esc(t.name||'(ohne Name)')}<small>${t.once?'einmalig':'Anteil'}${sc==='all'?' · '+(t.von==='VS'?'Vanessa → Nicola':'Nicola → Vanessa'):''}</small></span><span class="num">${fmt(t.amt)}</span></div>`;
     let t='';
-    if(sc==='all'){ const a=c.tr.filter(x=>x.von==='VS').reduce((q,x)=>q+x.amt,0), b=c.tr.filter(x=>x.von==='NJ').reduce((q,x)=>q+x.amt,0);
-      t=`<div class="settle">Vanessa überweist Nicola <b>${chf(a)}</b>${b>0.004?` · Nicola überweist Vanessa <b>${chf(b)}</b>`:''}</div>`+c.tr.map(row).join(''); }
+    if(sc==='all'){ const a=c.tr.filter(x=>x.von==='VS').reduce((q,x)=>q+x.amt,0), b=c.tr.filter(x=>x.von==='NJ').reduce((q,x)=>q+x.amt,0), net=a-b;
+      t=`<div class="settle big">${Math.abs(net)<0.005?'Beide quitt – nichts zu überweisen':net>0?`Vanessa überweist Nicola Ende Monat <b>${chf(net)}</b>`:`Nicola überweist Vanessa Ende Monat <b>${chf(-net)}</b>`}</div>`+(a>0.004&&b>0.004?`<div class="hint" style="margin:0 0 6px">Vanessa → Nicola ${chf(a)} · Nicola → Vanessa ${chf(b)} · verrechnet</div>`:'')+c.tr.map(row).join(''); }
     else { const out=sc==='VS'?P.ausA:P.ausA, back=P.ausE;
       t=(out>0.004?`<div class="settle">${sc==='VS'?'Du überweist Nicola':'Du überweist Vanessa'} Ende Monat <b>${chf(out)}</b></div>`+list.map(row).join(''):'')+(back>0.004?`<div class="settle in">${sc==='VS'?'Du erhältst von Nicola':'Du erhältst von Vanessa'} <b>${chf(back)}</b> (zählt als Einnahme)</div>`+inc.map(row).join(''):''); }
-    return `<div class="panel"><div class="ph"><h2>Ausgleich Nicola ↔ Vanessa</h2></div>${t}</div>`;
+    return `<div class="panel"><div class="ph"><h2>Ende Monat überweisen</h2></div>${t}</div>`;
   };
   const chartPanel=()=>{ const yr=yearData(ui.year); return `<div class="panel"><div class="ph"><h2>Jahr ${ui.year}</h2><button class="btn sec sm" data-tab="year">Jahresüberblick</button></div>${chart2(yr.map(r=>MONTHS[r.m-1].slice(0,3)),[{name:'Einnahmen',color:C_EIN,values:yr.map(r=>pick(r.c,sc).ein)},{name:'Ausgaben',color:C_AUS,values:yr.map(r=>pick(r.c,sc).ausg)}],ui.cview)}</div>`; };
   const hl=[];
@@ -1426,7 +1438,7 @@ function viewDash(){
     const rows=[['ein','Einnahmen'],['mo','Monatliche Ausgaben'],['ek','Einkaufskonto'],['spar','Sparen'],['steuer','Jahreskonto']];
     let L=`<div class="panel"><div class="ph"><h2>Nicola und Vanessa${md.frozen?'<span class="frozen">🔒 eingefroren</span>':''}</h2>${md.frozen&&adm?'<button class="btn sec sm" data-fedit="'+ui.key+'">Monat bearbeiten</button>':''}</div>
      <table class="ledger"><tr><th></th><th class="n">Nicola</th><th class="v">Vanessa</th><th>Haushalt</th></tr>`+
-     rows.map(([f,l])=>`<tr class="${f==='spar'?'spar':''}"><td>${l}${f==='steuer'?'<small>Jahreskosten ÷ 12</small>':''}</td><td class="n ${c.N[f]<0&&f==='spar'?'neg':''}">${fmt(c.N[f])}</td><td class="v ${c.V[f]<0&&f==='spar'?'neg':''}">${fmt(c.V[f])}</td><td class="h ${c.H[f]<0&&f==='spar'?'neg':''}">${fmt(c.H[f])}</td></tr>`).join('')+
+     rows.map(([f,l])=>`<tr class="${f==='spar'?'spar':''}"><td>${l}${f==='steuer'?(vHasJk()?'<small>Jahreskosten ÷ 12</small>':'<small>nur Nicola · Vanessa spart dafür</small>'):''}${f==='spar'&&c.V.res>0.004?`<small>Vanessa inkl. ${fmt(c.V.res)} für Jahreskosten</small>`:''}</td><td class="n ${c.N[f]<0&&f==='spar'?'neg':''}">${fmt(c.N[f])}</td><td class="v ${c.V[f]<0&&f==='spar'?'neg':''}">${f==='steuer'&&!vHasJk()?'–':fmt(c.V[f])}</td><td class="h ${c.H[f]<0&&f==='spar'?'neg':''}">${fmt(c.H[f])}</td></tr>`).join('')+
      `<tr><td style="color:var(--muted)">Sparquote</td><td class="n">${c.N.ein?(c.N.spar/c.N.ein*100).toFixed(1)+' %':'–'}</td><td class="v">${c.V.ein?(c.V.spar/c.V.ein*100).toFixed(1)+' %':'–'}</td><td class="h">${c.H.ein?(c.H.spar/c.H.ein*100).toFixed(1)+' %':'–'}</td></tr></table></div>`;
     const vals=all.map(k=>{const o=c.cat[k]||{n:0,v:0}; return {k,n:o.n,v:o.v,t:o.n+o.v};}).filter(x=>x.t>0.004).sort((a,b)=>b.t-a.t);
     const mx=Math.max(1,...vals.map(x=>x.t)), tot=vals.reduce((a,x)=>a+x.t,0);
@@ -1446,7 +1458,7 @@ function viewDash(){
     return h+`<div class="dgrid"><div>${L}</div><div>${chartPanel()}${trPanel()}${hints}</div></div>`;
   }
   /* Person: schlank, nur die Konten und aufklappbare Listen */
-  const secs=[['mo','Monatliche Ausgaben'],['ek','Einkaufskonto'],['steuer','Jahreskonto']];
+  const secs=[['mo','Monatliche Ausgaben'],['ek','Einkaufskonto'],['steuer',sc==='VS'&&!vHasJk()?'Jahreskosten (aus dem Sparkonto)':'Jahreskonto']];
   const lines={mo:[],ek:[],steuer:[]};
   md.items.forEach(it=>{ if(it.art==='Ausgleich'){ if(it.von===sc && r05(it.betrag)>0.004) lines.mo.push({it:{...it,art:'Einmalig',kat:sc==='VS'?'Zahlung an Nicola':'Zahlung an Vanessa'},a:r05(it.betrag),back:0}); return; }
     if(it.art==='Lohn') return; const a=payAmt(it,sc); if(a<=0.004) return;
@@ -1622,7 +1634,7 @@ function openEntry(id){
   if(!canEdit(e)) return;
   const m=$('#modal');
   const arts=adm?['Monatlich','Einmalig','Jährlich','Lohn','Ausgleich:VS','Ausgleich:NJ']:['Monatlich','Einmalig','Jährlich','Lohn'];
-  const artL={Monatlich:'Monatlich',Einmalig:'Einmalig',Jährlich:'Jährlich (÷ 12 ans Jahreskonto)',Lohn:'Weitere Einnahme','Ausgleich:VS':'Vanessa zahlt an Nicola','Ausgleich:NJ':'Nicola zahlt an Vanessa'};
+  const artL={Monatlich:'Monatlich',Einmalig:'Einmalig',Jährlich:'Jährlich (÷ 12 gespart)',Lohn:'Weitere Einnahme','Ausgleich:VS':'Vanessa zahlt an Nicola','Ausgleich:NJ':'Nicola zahlt an Vanessa'};
   const cur=artSel(e);
   const form=()=>`<div class="sheet"><h3>${isNew?'Neuer Eintrag':'Eintrag bearbeiten'}</h3>
   <form id="ef">
@@ -1632,6 +1644,7 @@ function openEntry(id){
     <div class="two-c"><label class="f"><span data-betrag>Betrag (CHF)</span><input name="betrag" type="number" step="any" inputmode="decimal" value="${e.betrag}" required></label>
     <label class="f" data-werwrap>Wer trägt die Kosten<select name="wer">${(adm?[['NJ','Nicola'],['VS','Vanessa'],['50/50','50/50']]:[['VS','Vanessa']]).map(([v,l])=>`<option value="${v}" ${e.wer===v?'selected':''}>${l}</option>`).join('')}</select></label></div>
     ${adm?`<div class="two-c"><label class="f" data-pvwrap>Anteil Vanessa (%)<input name="pv" type="number" min="0" max="100" step="any" inputmode="decimal" value="${e.pv??50}"></label><label class="f" data-kwrap>Bezahlt über<select name="konto"><option value="">Privatkonto</option><option value="einkauf" ${e.konto==='einkauf'?'selected':''}>Einkaufskonto (Miete, Essen …)</option></select></label></div>`:''}
+    ${adm?`<label class="f" data-zwrap>Wer zahlt die Rechnung<select name="zahler"><option value="">Jeder zahlt seinen Anteil selbst</option><option value="NJ" ${e.zahler==='NJ'?'selected':''}>Nicola zahlt alles – Vanessa gibt ihren Anteil zurück</option><option value="VS" ${e.zahler==='VS'?'selected':''}>Vanessa zahlt alles – Nicola gibt seinen Anteil zurück</option></select></label>`:''}
     <div class="two-c"><label class="f"><span data-ablab>Ab Monat</span><input name="ab" type="month" value="${toInput(e.ab)}" required></label>
     <label class="f" data-biswrap>Bis Monat (leer = läuft weiter)<input name="bis" type="month" value="${toInput(e.bis)}"></label></div>
     <div class="hint" data-hint></div><div class="err" data-err></div>
@@ -1642,6 +1655,7 @@ function openEntry(id){
   </form></div>`;
   m.innerHTML=form(); m.classList.add('on');
   const f=$('#ef');
+  const lohn0=()=>f.art.value==='Lohn';
   const parseArt=()=>{ const v=f.art.value; return v.startsWith('Ausgleich:')?{art:'Ausgleich',von:v.split(':')[1]}:{art:v}; };
   const sync=()=>{
     const {art,von}=parseArt(), tr=art==='Ausgleich', lohn=art==='Lohn';
@@ -1650,11 +1664,16 @@ function openEntry(id){
     $('[data-ablab]',f).textContent=oneShot(art)?'Monat':'Ab Monat';
     $('[data-betrag]',f).textContent=art==='Jährlich'?'Jahresbetrag (CHF)':'Betrag (CHF)';
     $('[data-werwrap]',f).style.display=tr?'none':'';
+    if(adm){ const zw=$('[data-zwrap]',f); zw.style.display=(!tr&&!lohn&&f.wer.value==='50/50')?'':'none'; }
     if(adm){ const geteilt=f.wer.value==='50/50'&&!tr; $('[data-pvwrap]',f).style.visibility=geteilt?'':'hidden'; $('[data-kwrap]',f).style.visibility=art==='Monatlich'?'':'hidden'; $('[data-pvwrap]',f).parentNode.style.display=(tr||(!geteilt&&art!=='Monatlich'))?'none':''; }
     const ab=fromInput(f.ab.value), b=r05(parseFloat(f.betrag.value)||0); let hint='';
-    if(art==='Jährlich'&&b) hint=`= ${chf(r05(b/12))} pro Monat ans Jahreskonto`;
+    if(art==='Jährlich'&&b) hint=`= ${chf(r05(b/12))} pro Monat zurücklegen`+(!vHasJk()&&f.wer.value!=='NJ'?' (Vanessas Anteil fließt ins Sparkonto, Nicolas ans Jahreskonto)':' ans Jahreskonto');
     if(tr&&b) hint=von==='VS'?`Vanessa überweist Nicola ${chf(b)} (einmalig). Bei Nicola zählt das als zusätzliche Einnahme, bei Vanessa als Ausgabe.`:`Nicola überweist Vanessa ${chf(b)} (einmalig). Bei Vanessa zählt das als zusätzliche Einnahme, bei Nicola als Ausgabe.`;
     if(adm&&!tr&&f.wer.value==='50/50'&&b){ const p=Math.min(100,Math.max(0,parseFloat(f.pv.value)||0)); if(p!==50) hint=`Aufteilung: Vanessa ${p} %, Nicola ${100-p} %.`+(hint?' '+hint:''); }
+    if(adm&&!tr&&!lohn&&f.wer.value==='50/50'&&f.zahler.value&&b){
+      const p=Math.min(100,Math.max(0,parseFloat(f.pv.value)||50))/100, mo=r05(art==='Jährlich'?b/12:b), vS=r05(mo*p), nS=r05(mo-vS);
+      hint=f.zahler.value==='NJ'?`Nicola zahlt ${chf(mo)}, Vanessa überweist ihm ${chf(vS)} Ende Monat zurück.`:`Vanessa zahlt ${chf(mo)}, Nicola überweist ihr ${chf(nS)} Ende Monat zurück.`;
+    }
     if(!hint && ab&&ab<nowKey()) hint='Vergangene Monate sind eingefroren und ändern sich nicht.';
     $('[data-hint]',f).textContent=hint;
   };
@@ -1671,6 +1690,7 @@ function openEntry(id){
     if(bis!=null && bis<ab){ err.textContent='«Bis Monat» liegt vor «Ab Monat».'; return; }
     const obj={art, kat:(art==='Lohn'||tr)?grpOf({art}):f.kat.value, name:f.name.value.trim(), betrag, wer:tr?'50/50':f.wer.value, ab, bis};
     if(adm && art==='Monatlich' && f.konto.value) obj.konto=f.konto.value;
+    if(adm && !tr && !lohn0() && obj.wer==='50/50' && f.zahler.value) obj.zahler=f.zahler.value;
     if(adm && !tr && obj.wer==='50/50'){ const p=parseFloat(f.pv.value); if(!isNaN(p)&&Math.round(p*100)!==5000) obj.pv=Math.min(100,Math.max(0,p)); }
     if(tr) obj.von=von;
     if(!adm) obj.wer='VS';
