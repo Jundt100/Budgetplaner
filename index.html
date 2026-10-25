@@ -988,7 +988,7 @@ function viewEntries(){
 
 /* ============ Admin / Verwaltung ============ */
 /* ============ Einstellungen ============ */
-const APP_VERSION='2026.10.25-1';
+const APP_VERSION='2026.10.25-2';
 const autoUpd = () => lsGet('budget_autoupd','1')!=='0';
 function installPanel(){
   const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
@@ -1653,11 +1653,9 @@ function viewYearPage(){
 
 /* ============ Zahlungen (abhaken) ============ */
 const tickIds = (col,k) => ((S.pd&&S.pd[col]||{})[k]||{}).ids||{};
-const tickCol = it => isAdmin() && it.wer!=='VS' ? 'paid' : 'paidV';
+const tickCol = it => isAdmin() ? 'paid' : 'paidV';   // jeder hakt nur in seiner eigenen Liste ab
 const isPaid = (it,k) => {
   if(!it.id) return false;
-  if(!isAdmin()) return !!tickIds('paidV',k)[it.id];
-  if(it.art==='Ausgleich') return !!(tickIds('paid',k)[it.id]||tickIds('paidV',k)[it.id]);
   return !!tickIds(tickCol(it),k)[it.id];
 };
 async function setTickMany(rows,k,val){
@@ -1714,7 +1712,7 @@ function viewPay(){
     const all=payGroups(rows,sc).find(x=>x.key===g.key)||g, gs=paySummary(all.rows,k), alld=gs.nd===gs.n;
     h+=`<div class="panel pgroup"><div class="ph"><h2>${esc(g.label)}</h2><span class="gsum">${gs.nd}/${gs.n} · ${fmt0(gs.aT)}</span><button class="btn sec sm" data-tickall="${esc(g.key)}">${alld?'Zurücksetzen':'Alle ✓'}</button></div>`+
       g.rows.map(r=>{ const it=r.it, pd=isPaid(it,k);
-        const vTick=isAdmin()&&it.wer==='50/50'&&it.art!=='Ausgleich'&&tickIds('paidV',k)[it.id];
+        const vTick=isAdmin()&&it.wer!=='NJ'&&tickIds('paidV',k)[it.id];
         const sub=it.art==='Ausgleich'?(it.von==='VS'?'Vanessa → Nicola':'Nicola → Vanessa'):it.art==='Jährlich'?'jährlich '+fmt0(it.betrag)+' · ÷ 12':it.art==='Einmalig'?'einmalig':'';
         const who=sc==='all'?`<span class="wtag ${it.wer==='NJ'?'n':it.wer==='VS'?'v':''}">${it.wer==='NJ'?'N':it.wer==='VS'?'V':'N+V'}</span>`:'';
         return `<div class="prow ${pd?'done':''}" data-tick="${it.id}" role="checkbox" aria-checked="${pd}" tabindex="0"><span class="cb">${CHECK}</span><span class="nm">${esc(it.name||'(ohne Name)')}${chips(EM[it.id]||{})}${vTick?'<span class="chip ok">Vanessa ✓</span>':''}${sub?`<small>${esc(sub)}</small>`:''}</span>${who}<span class="num">${fmt(r.amt)}</span></div>`; }).join('')+`</div>`;
