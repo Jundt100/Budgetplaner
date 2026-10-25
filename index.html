@@ -899,7 +899,7 @@ function scopeSeg(){
   if(!isAdmin()) return '';
   return `<div class="seg">${['all','NJ','VS'].map(s=>`<button class="${ui.scope===s?'on '+(s==='NJ'?'nj':s==='VS'?'vs':''):''}" data-scope="${s}">${scopeLabel[s]}</button>`).join('')}</div>`;
 }
-Object.assign(ui,{pkey:nowKey(),pfilter:'all',pgrp:'kat',ym:null,ycat:null,ydon:'kat',yser:['ein','aus'],ymode:'full'});
+Object.assign(ui,{pkey:startKey(),pfilter:'all',pgrp:'kat',ym:null,ycat:null,ydon:'kat',yser:['ein','aus'],ymode:'full'});
 function monthNav(){
   return `<div class="mnav"><button data-mshift="-1" aria-label="Vorheriger Monat">‹</button>
     <div class="lab" style="line-height:38px">${label(ui.key)}<input type="month" value="${toInput(ui.key)}" data-mpick aria-label="Monat wählen"></div>
@@ -988,7 +988,7 @@ function viewEntries(){
 
 /* ============ Admin / Verwaltung ============ */
 /* ============ Einstellungen ============ */
-const APP_VERSION='2026.10.25-2';
+const APP_VERSION='2026.10.25-3';
 const autoUpd = () => lsGet('budget_autoupd','1')!=='0';
 function installPanel(){
   const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
@@ -1699,7 +1699,7 @@ function payNav(){
 function viewPay(){
   const k=ui.pkey, sc=ui.scope, cur=nowKey(), md=monthData(k), rows=payRows(md,sc), sm=paySummary(rows,k);
   let h=`<div class="topbar"><h1>Zahlungen</h1>${payNav()}${scopeSeg()}</div>`;
-  const state=k<cur?'Vergangener Monat':k===cur?'Laufender Monat':'Geplanter Monat';
+  const state=k<cur?'Vergangener Monat':k===cur?'Laufender Monat':k===cur+1?`Budgetmonat · bezahlt mit dem Lohn vom 25. ${MONTHS[ymOf(cur).m-1]}`:'Geplanter Monat';
   h+=`<div class="panel payhead"><div class="pg-top"><div><b>${sm.n?(sm.nd===sm.n?'🎉 Alles bezahlt':`${sm.nd} von ${sm.n} bezahlt`):'Keine Kosten in diesem Monat'}</b><span>${state} · offen <b>${chf(sm.open)}</b> von ${chf(sm.aT)}</span></div>
     <div class="seg">${[['all','Alle'],['open','Offen'],['done','Bezahlt']].map(([v,l])=>`<button class="${ui.pfilter===v?'on':''}" data-pfilter="${v}">${l}</button>`).join('')}</div></div>
     <div class="pbar"><i style="width:${sm.pct}%"></i></div>
