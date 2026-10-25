@@ -899,7 +899,7 @@ function scopeSeg(){
   if(!isAdmin()) return '';
   return `<div class="seg">${['all','NJ','VS'].map(s=>`<button class="${ui.scope===s?'on '+(s==='NJ'?'nj':s==='VS'?'vs':''):''}" data-scope="${s}">${scopeLabel[s]}</button>`).join('')}</div>`;
 }
-Object.assign(ui,{pkey:startKey(),pfilter:'all',pgrp:'kat',ym:null,ycat:null,ydon:'kat',yser:['ein','aus'],ymode:'full'});
+Object.assign(ui,{pwho:'NJ',pkey:startKey(),pfilter:'all',pgrp:'kat',ym:null,ycat:null,ydon:'kat',yser:['ein','aus'],ymode:'full'});
 function monthNav(){
   return `<div class="mnav"><button data-mshift="-1" aria-label="Vorheriger Monat">‹</button>
     <div class="lab" style="line-height:38px">${label(ui.key)}<input type="month" value="${toInput(ui.key)}" data-mpick aria-label="Monat wählen"></div>
@@ -988,7 +988,7 @@ function viewEntries(){
 
 /* ============ Admin / Verwaltung ============ */
 /* ============ Einstellungen ============ */
-const APP_VERSION='2026.10.25-3';
+const APP_VERSION='2026.10.25-4';
 const autoUpd = () => lsGet('budget_autoupd','1')!=='0';
 function installPanel(){
   const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
@@ -1222,7 +1222,7 @@ async function saveEntryField(row,f,val){
   logEv('Geändert',diffText(e,o));
 }
 document.addEventListener('click', async ev=>{
-  const t=ev.target.closest('[data-tab],[data-scope],[data-mshift],[data-yshift],[data-cview],[data-sub],[data-side],[data-edit],[data-act],[data-tick],[data-tickall],[data-pfilter],[data-pgrp],[data-pshift],[data-pgo],[data-gokey],[data-ymode],[data-ser],[data-ydon],[data-ycat],[data-ym],[data-yr],[data-refreeze],[data-delcat],[data-delrow],[data-addin],[data-fedit],[data-relock]');
+  const t=ev.target.closest('[data-tab],[data-scope],[data-mshift],[data-yshift],[data-cview],[data-sub],[data-side],[data-edit],[data-act],[data-tick],[data-tickall],[data-pfilter],[data-pwho],[data-pgrp],[data-pshift],[data-pgo],[data-gokey],[data-ymode],[data-ser],[data-ydon],[data-ycat],[data-ym],[data-yr],[data-refreeze],[data-delcat],[data-delrow],[data-addin],[data-fedit],[data-relock]');
   if(!t) return;
   const d=t.dataset;
   if(d.tab){ if(d.tab!==ui.tab||ui.sub) go(()=>{ ui.tab=d.tab; ui.sub=''; ui.animate=true; render(); window.scrollTo(0,0); }); }
@@ -1233,14 +1233,15 @@ document.addEventListener('click', async ev=>{
   else if(d.sub!==undefined){ go(()=>{ ui.sub=d.sub; render(); window.scrollTo(0,0); }); }
   else if(t.hasAttribute('data-side')){ ui.side=ui.side==='closed'?'open':'closed'; lsSet('budget_side',ui.side); const sh=$('.shell'); if(sh){ sh.classList.toggle('mini',ui.side==='closed'); sh.dataset.sig=sh.dataset.sig.replace(/(open|closed)$/,ui.side); sh.querySelector('aside.side').innerHTML=sideHtml(backend&&backend.mode==='firebase',backend&&backend.user?backend.user.email:''); sh.querySelectorAll('.nv').forEach(b=>b.classList.toggle('on',b.dataset.tab===ui.tab)); } }
   else if(d.tick){
-    const el=t, md=monthData(ui.pkey), r=payRows(md,ui.scope).find(x=>x.it.id===d.tick); if(!r) return;
+    const el=t, md=monthData(ui.pkey), r=payRows(md,paySc()).find(x=>x.it.id===d.tick); if(!r) return;
     const nv=!isPaid(r.it,ui.pkey); el.classList.toggle('done',nv); el.setAttribute('aria-checked',nv);
     await setTickMany([r],ui.pkey,nv);
   }
   else if(d.tickall!==undefined){
-    const rows=payRows(monthData(ui.pkey),ui.scope), g=payGroups(rows,ui.scope).find(x=>x.key===d.tickall); if(!g) return;
+    const rows=payRows(monthData(ui.pkey),paySc()), g=payGroups(rows,paySc()).find(x=>x.key===d.tickall); if(!g) return;
     const alld=g.rows.every(r=>isPaid(r.it,ui.pkey)); await setTickMany(g.rows,ui.pkey,!alld);
   }
+  else if(d.pwho){ go(()=>{ ui.pwho=d.pwho; ui.keepScroll=true; render(); }); }
   else if(d.pfilter){ ui.pfilter=d.pfilter; ui.keepScroll=true; render(); }
   else if(d.pgrp){ ui.pgrp=d.pgrp; ui.keepScroll=true; render(); }
   else if(d.pshift){ go(()=>{ ui.pkey+=+d.pshift; ui.animate=true; ui.keepScroll=true; render(); }); }
@@ -1653,10 +1654,13 @@ function viewYearPage(){
 
 /* ============ Zahlungen (abhaken) ============ */
 const tickIds = (col,k) => ((S.pd&&S.pd[col]||{})[k]||{}).ids||{};
-const tickCol = it => isAdmin() ? 'paid' : 'paidV';   // jeder hakt nur in seiner eigenen Liste ab
-const isPaid = (it,k) => {
+const ownCol = () => isAdmin() ? 'paid' : 'paidV';        // jeder hakt in seiner eigenen Liste ab
+const pCol = () => isAdmin() && ui.pwho==='VS' ? 'paidV' : ownCol();   // Admin kann auch Vanessas Liste führen
+const paySc = () => isAdmin() && ui.pwho==='VS' ? 'VS' : ui.scope;
+const tickCol = it => pCol();
+const isPaid = (it,k,col) => {
   if(!it.id) return false;
-  return !!tickIds(tickCol(it),k)[it.id];
+  return !!tickIds(col||pCol(),k)[it.id];
 };
 async function setTickMany(rows,k,val){
   const by={};
@@ -1680,8 +1684,8 @@ function payRows(md,sc){
   });
   return rows;
 }
-function paySummary(rows,k){
-  const nd=rows.filter(r=>isPaid(r.it,k)), aT=sumBy(rows,r=>r.amt), aD=sumBy(nd,r=>r.amt);
+function paySummary(rows,k,col){
+  const nd=rows.filter(r=>isPaid(r.it,k,col)), aT=sumBy(rows,r=>r.amt), aD=sumBy(nd,r=>r.amt);
   return {n:rows.length, nd:nd.length, aT, aD, open:aT-aD, pct:rows.length?nd.length/rows.length*100:0};
 }
 const SECL = sc => ({mo:'Monatliche Ausgaben',ek:'Einkaufskonto',steuer:sc==='VS'&&!vHasJk()?'Jahreskosten (Sparkonto)':'Jahreskonto',zahl:'Zahlungen Nicola ↔ Vanessa'});
@@ -1697,10 +1701,12 @@ function payNav(){
   return `<div class="mnav"><button data-pshift="-1" aria-label="Vorheriger Monat">‹</button><div class="lab" style="line-height:38px">${label(ui.pkey)}</div><button data-pshift="1" aria-label="Nächster Monat">›</button></div>`;
 }
 function viewPay(){
-  const k=ui.pkey, sc=ui.scope, cur=nowKey(), md=monthData(k), rows=payRows(md,sc), sm=paySummary(rows,k);
-  let h=`<div class="topbar"><h1>Zahlungen</h1>${payNav()}${scopeSeg()}</div>`;
+  const k=ui.pkey, sc=paySc(), cur=nowKey(), md=monthData(k), rows=payRows(md,sc), sm=paySummary(rows,k), vm=isAdmin()&&ui.pwho==='VS';
+  const vRows=isAdmin()?payRows(md,'VS'):[], vSm=paySummary(vRows,k,'paidV');
+  let h=`<div class="topbar"><h1>Zahlungen</h1>${payNav()}${vm?'':scopeSeg()}</div>`;
+  if(isAdmin()) h+=`<div class="ytools"><div class="seg"><button class="${!vm?'on nj':''}" data-pwho="NJ">Meine Haken</button><button class="${vm?'on vs':''}" data-pwho="VS">Vanessas Haken · ${vSm.nd}/${vSm.n}</button></div>${vm?'<span class="hint" style="margin:0">Du siehst und setzt hier Vanessas Haken. Sie sieht ihre eigene Liste auf ihrem Gerät.</span>':`<span class="hint" style="margin:0">Vanessa hat ${vSm.nd} von ${vSm.n} abgehakt.</span>`}</div>`;
   const state=k<cur?'Vergangener Monat':k===cur?'Laufender Monat':k===cur+1?`Budgetmonat · bezahlt mit dem Lohn vom 25. ${MONTHS[ymOf(cur).m-1]}`:'Geplanter Monat';
-  h+=`<div class="panel payhead"><div class="pg-top"><div><b>${sm.n?(sm.nd===sm.n?'🎉 Alles bezahlt':`${sm.nd} von ${sm.n} bezahlt`):'Keine Kosten in diesem Monat'}</b><span>${state} · offen <b>${chf(sm.open)}</b> von ${chf(sm.aT)}</span></div>
+  h+=`<div class="panel payhead"><div class="pg-top"><div><b>${sm.n?(sm.nd===sm.n?'🎉 Alles bezahlt':`${sm.nd} von ${sm.n} bezahlt`):'Keine Kosten in diesem Monat'}${vm?' <span style="color:var(--van);font-weight:600;font-size:13px">(Vanessa)</span>':''}</b><span>${state} · offen <b>${chf(sm.open)}</b> von ${chf(sm.aT)}</span></div>
     <div class="seg">${[['all','Alle'],['open','Offen'],['done','Bezahlt']].map(([v,l])=>`<button class="${ui.pfilter===v?'on':''}" data-pfilter="${v}">${l}</button>`).join('')}</div></div>
     <div class="pbar"><i style="width:${sm.pct}%"></i></div>
     <div class="pg-sub"><span class="hint" style="margin:0">Zeile antippen = bezahlt. Der Haken gilt nur für diesen Monat.</span><div class="seg"><button class="${ui.pgrp==='kat'?'on':''}" data-pgrp="kat">Kategorie</button><button class="${ui.pgrp==='konto'?'on':''}" data-pgrp="konto">Konto</button></div></div></div>`;
@@ -1712,7 +1718,7 @@ function viewPay(){
     const all=payGroups(rows,sc).find(x=>x.key===g.key)||g, gs=paySummary(all.rows,k), alld=gs.nd===gs.n;
     h+=`<div class="panel pgroup"><div class="ph"><h2>${esc(g.label)}</h2><span class="gsum">${gs.nd}/${gs.n} · ${fmt0(gs.aT)}</span><button class="btn sec sm" data-tickall="${esc(g.key)}">${alld?'Zurücksetzen':'Alle ✓'}</button></div>`+
       g.rows.map(r=>{ const it=r.it, pd=isPaid(it,k);
-        const vTick=isAdmin()&&it.wer!=='NJ'&&tickIds('paidV',k)[it.id];
+        const vTick=isAdmin()&&!vm&&it.wer!=='NJ'&&tickIds('paidV',k)[it.id];
         const sub=it.art==='Ausgleich'?(it.von==='VS'?'Vanessa → Nicola':'Nicola → Vanessa'):it.art==='Jährlich'?'jährlich '+fmt0(it.betrag)+' · ÷ 12':it.art==='Einmalig'?'einmalig':'';
         const who=sc==='all'?`<span class="wtag ${it.wer==='NJ'?'n':it.wer==='VS'?'v':''}">${it.wer==='NJ'?'N':it.wer==='VS'?'V':'N+V'}</span>`:'';
         return `<div class="prow ${pd?'done':''}" data-tick="${it.id}" role="checkbox" aria-checked="${pd}" tabindex="0"><span class="cb">${CHECK}</span><span class="nm">${esc(it.name||'(ohne Name)')}${chips(EM[it.id]||{})}${vTick?'<span class="chip ok">Vanessa ✓</span>':''}${sub?`<small>${esc(sub)}</small>`:''}</span>${who}<span class="num">${fmt(r.amt)}</span></div>`; }).join('')+`</div>`;
@@ -1722,7 +1728,7 @@ function viewPay(){
 const EMAP = () => Object.fromEntries(S.entries.map(e=>[e.id,e]));
 function payPanel(md,sc){
   const k=ui.key, rows=payRows(md,sc); if(!rows.length) return '';
-  const sm=paySummary(rows,k);
+  const sm=paySummary(rows,k,ownCol());
   return `<div class="panel"><div class="ph"><h2>Zahlungen ${MONTHS[ymOf(k).m-1]}</h2><button class="btn sec sm" data-pgo="${k}">Abhaken</button></div>
    <div class="pbar"><i style="width:${sm.pct}%"></i></div><div class="hint" style="margin:8px 0 0">${sm.nd===sm.n?'🎉 Alles bezahlt':`<b>${sm.nd} von ${sm.n}</b> bezahlt · offen ${chf(sm.open)}`}</div></div>`;
 }
