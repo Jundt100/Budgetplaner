@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#17795a">
+<meta name="theme-color" content="#052659">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Budget">
@@ -578,6 +578,49 @@ svg.chart2 .hit[data-ym],svg.chart2 .hit[data-yr]{cursor:pointer}
 .wtag.n{background:var(--nic-bg);color:var(--nic)}.wtag.v{background:var(--van-bg);color:var(--van)}
 .chip.ok{background:var(--accent-bg);color:var(--accent-d);margin-left:7px}
 .prow .nm .chip{margin-left:8px}
+/* ================= Farbkonzept «Tiefblau»: #021024 #052659 #5483B3 #7DA0CA #C1E8FF ================= */
+:root{
+  --p0:#021024; --p1:#052659; --p2:#5483B3; --p3:#7DA0CA; --p4:#C1E8FF;
+  --bg:#e6f3ff; --panel:rgba(255,255,255,.64); --solid:#fff; --ink:#021024; --muted:#47617f;
+  --line:rgba(5,38,89,.13); --soft:rgba(5,38,89,.065);
+  --accent:#052659; --accent-d:#052659; --accent-bg:rgba(84,131,179,.2);
+  --nic:#2b62b3; --nic-bg:rgba(84,131,179,.2); --van:#e8791a; --van-bg:rgba(255,149,0,.15);
+  --ein:rgba(125,160,202,.28); --blue-chip:rgba(84,131,179,.2);
+  --glass-b:rgba(255,255,255,.72); --shadow:0 1px 2px rgba(2,16,36,.05),0 12px 32px rgba(5,38,89,.12);
+  --k-ein:#7DA0CA; --k-mon:#5483B3; --k-ek:#2b62b3; --k-steuer:#052659;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#021024; --panel:rgba(5,38,89,.46); --solid:#071d45; --ink:#e9f5ff; --muted:#93add0;
+    --line:rgba(193,232,255,.15); --soft:rgba(193,232,255,.08);
+    --accent:#4b78aa; --accent-d:#a5c8f0; --accent-bg:rgba(125,160,202,.22);
+    --nic:#8fb6e6; --nic-bg:rgba(125,160,202,.24); --van:#ffa24d; --van-bg:rgba(255,159,10,.2);
+    --ein:rgba(125,160,202,.24); --blue-chip:rgba(125,160,202,.26);
+    --glass-b:rgba(193,232,255,.14); --shadow:0 1px 2px rgba(0,0,0,.35),0 14px 36px rgba(0,0,0,.4);
+    --k-ein:#7DA0CA; --k-mon:#5483B3; --k-ek:#8fb6e6; --k-steuer:#C1E8FF;
+  }
+}
+body{background:radial-gradient(900px 560px at 12% -10%,rgba(125,160,202,.55),transparent 62%),radial-gradient(760px 520px at 100% 4%,rgba(193,232,255,.9),transparent 60%),linear-gradient(180deg,#b7defc 0%,#d9eeff 34%,#eef7ff 100%);background-attachment:fixed}
+@media (prefers-color-scheme:dark){body{background:radial-gradient(900px 560px at 10% -12%,rgba(84,131,179,.38),transparent 62%),radial-gradient(760px 520px at 100% 0%,rgba(5,38,89,.9),transparent 60%),linear-gradient(180deg,#052659 0%,#031a40 32%,#021024 100%);background-attachment:fixed}}
+::selection{background:rgba(125,160,202,.45)}
+/* Kapselform wie im Farbkonzept */
+.nv{border-radius:999px}
+aside.side .nv.on,.nv:hover{border-radius:999px}
+.btn,.seg,.seg button,.chip,.sc,.chipx{border-radius:999px}
+.btn:not(.sec):not(.danger){background:linear-gradient(135deg,#5483B3,#052659);color:#fff;border-color:transparent}
+.btn:not(.sec):not(.danger):hover{filter:brightness(1.1)}
+.kpi.ein{--c:var(--k-ein)}.kpi.mon{--c:var(--k-mon)}.kpi.ek{--c:var(--k-ek)}.kpi.steuer{--c:var(--k-steuer)}.kpi.spar{--c:var(--p2)}
+.kpi.spar{background:linear-gradient(160deg,rgba(125,160,202,.32),var(--panel))}
+.switch input:checked+span{background:var(--p2)}
+.fab{background:linear-gradient(145deg,#7DA0CA,#052659)!important;box-shadow:0 10px 26px rgba(5,38,89,.45),inset 0 1px 0 rgba(255,255,255,.4)!important}
+.fab:hover{box-shadow:0 16px 38px rgba(5,38,89,.55),0 0 0 6px rgba(125,160,202,.28),inset 0 1px 0 rgba(255,255,255,.45)!important}
+.pbar i{background:linear-gradient(90deg,#5483B3,#7DA0CA 60%,#C1E8FF)}
+.prow.done .cb{background:var(--p2);border-color:var(--p2)}
+.dl.up{color:#1a8a5a}
+@media (prefers-color-scheme:dark){.dl.up{color:#5fd8a0}.dl.dn{color:#ff8a78}.btn:not(.sec):not(.danger){background:linear-gradient(135deg,#5483B3,#0b3f8f)}}
+.chip.ek{background:var(--accent-bg);color:var(--accent-d)}
+.selcol{fill:rgba(125,160,202,.22)}
+.btn:not(.sec):not(.danger){box-shadow:0 4px 12px rgba(5,38,89,.28)}
 </style>
 </head>
 <body>
@@ -988,7 +1031,7 @@ function viewEntries(){
 
 /* ============ Admin / Verwaltung ============ */
 /* ============ Einstellungen ============ */
-const APP_VERSION='2026.10.25-5';
+const APP_VERSION='2026.11.01-1';
 const autoUpd = () => lsGet('budget_autoupd','1')!=='0';
 function installPanel(){
   const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
@@ -1133,7 +1176,7 @@ const IC={
  admin:'<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M6 6l1.6 1.6M16.4 16.4 18 18M18 6l-1.6 1.6M7.6 16.4 6 18"/>'
 };
 const icon = id => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IC[id]}</svg>`;
-const LOGO=`<svg viewBox="0 0 64 64" width="30" height="30" aria-hidden="true"><defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34d3a5"/><stop offset="1" stop-color="#0b7f66"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#lg1)"/><path d="M32 13.5 12.5 29.5H18V46a4 4 0 0 0 4 4h20a4 4 0 0 0 4-4V29.5h5.5Z" fill="#fff"/><path d="M32 30.5a8 8 0 0 0 0 16Z" fill="#0a84ff"/><path d="M32 30.5a8 8 0 0 1 0 16Z" fill="#ff9f0a"/></svg>`;
+const LOGO=`<svg viewBox="0 0 64 64" width="30" height="30" aria-hidden="true"><defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5483B3"/><stop offset="1" stop-color="#052659"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#lg1)"/><path d="M32 13.5 12.5 29.5H18V46a4 4 0 0 0 4 4h20a4 4 0 0 0 4-4V29.5h5.5Z" fill="#C1E8FF"/><path d="M32 30.5a8 8 0 0 0 0 16Z" fill="#052659"/><path d="M32 30.5a8 8 0 0 1 0 16Z" fill="#ff9f0a"/></svg>`;
 const TABS_A=[['dash','Übersicht'],['entries','Einträge'],['pay','Zahlungen'],['lohn','Löhne'],['year','Jahre'],['admin','Einstellungen']];
 const TABS_V=TABS_A;
 function sideHtml(fb,mail){
@@ -1422,7 +1465,7 @@ function chart2(labels, series, mode, opts={}){
   s+='</svg><div class="legend">'+series.map(se=>`<span><i style="background:${se.color}"></i>${esc(se.name)}</span>`).join('')+'</div>';
   return s;
 }
-const C_EIN='#34c759', C_AUS='#ff7a45';
+const C_EIN='#2fbf8f', C_AUS='#ff8a4c';
 
 /* ============ Übersicht ============ */
 const payAmt = (it,sc) => { const own=sc==='NJ'?it.n:it.v, oth=sc==='NJ'?it.v:it.n; return own+(it.zahler===sc?oth:0); };
@@ -1511,10 +1554,10 @@ function viewDash(){
 }
 
 /* ============ Jahresüberblick ============ */
-const C_N='#0a84ff', C_V='#ff9500', C_SP='#0a84ff', C_CUM='#af52de';
-const CAT_COL=['#34c759','#0a84ff','#ff9500','#af52de','#ff2d55','#5ac8fa','#ffcc00','#30b0c7','#a2845e','#8e8e93','#64d2ff','#bf5af2'];
+const C_N='var(--nic)', C_V='var(--van)', C_SP='#5483B3', C_CUM='#9ab8e0';
+const CAT_COL=['#5483B3','#f2994a','#3fb6a8','#9ab8e0','#e5646e','#8f7bd6','#e9c46a','#2f6fd0','#8fcf9f','#c58b5a','#64c4f0','#b07cc6'];
 const catColor = k => { const a=cats(); let i=a.indexOf(k); if(i<0) i=a.length+([...String(k)].reduce((q,c)=>q+c.charCodeAt(0),0)%5); return CAT_COL[i%CAT_COL.length]; };
-const SECCOL={mo:'#34c759',ek:'#0a84ff',steuer:'#ff9500'}, SECLBL={mo:'Monatliche Ausgaben',ek:'Einkaufskonto',steuer:'Jahreskonto'};
+const SECCOL={mo:'#5483B3',ek:'#2f6fd0',steuer:'#f2994a'}, SECLBL={mo:'Monatliche Ausgaben',ek:'Einkaufskonto',steuer:'Jahreskonto'};
 const sumBy = (rs,f) => rs.reduce((a,r)=>a+f(r),0);
 const hasData = r => Math.abs(r.c.H.ein)+Math.abs(r.c.H.ausg)+Math.abs(r.c.N.ein)+Math.abs(r.c.V.ein)>0.004;
 const yearRange = y => { const cur=nowKey(); return ui.ymode==='full'?yearData(y):yearData(y).filter(r=>r.k<=cur); };
