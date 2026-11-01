@@ -548,6 +548,14 @@ svg.chart2 .hit[data-ym],svg.chart2 .hit[data-yr]{cursor:pointer}
 
 .kpis.four{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media (max-width:700px){.kpis.four{grid-template-columns:1fr 1fr}}
+/* Laptop-Breite: 5 Kacheln nebeneinander sind zu schmal fuer die Betraege -> 3 + 2 */
+@media (min-width:900px) and (max-width:1439px){
+  .kpis:not(.four):not(.three){grid-template-columns:repeat(6,minmax(0,1fr))}
+  .kpis:not(.four):not(.three)>.kpi{grid-column:span 2}
+  .kpis:not(.four):not(.three)>.kpi:nth-child(n+4){grid-column:span 3}
+  .kpi .kv2,.kpi.spar .kv2{font-size:21px}
+  .kpi .ks{white-space:normal}
+}
 .chip.adv{background:rgba(175,82,222,.16);color:#8e3fb5}
 
 .settle.big{font-size:15.5px}
