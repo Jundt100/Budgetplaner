@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#052659">
+<meta name="theme-color" content="#C1E8FF">
+<meta name="color-scheme" content="light">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Budget">
@@ -20,9 +21,7 @@
   --nic:#2563c9; --nic-bg:#e8effc; --van:#d4601a; --van-bg:#fcece1;
   --ein:#f6e7b4; --steu:#fbe4d3; --red:#c0392b; --blue-chip:#dbe7fb;
 }
-@media (prefers-color-scheme:dark){
-  :root{--bg:#0f151b;--panel:#18212a;--ink:#e8eef3;--muted:#92a2b1;--line:#27333f;--soft:#1d2833;--accent:#3fbf93;--accent-d:#2ea77d;--accent-bg:#17382d;--nic:#6aa0f0;--nic-bg:#1c2b47;--van:#f19a62;--van-bg:#43291a;--ein:#4a4018;--steu:#46301f;--blue-chip:#1d3050}
-}
+
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.45 "Avenir Next","Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -279,12 +278,10 @@ details summary{cursor:pointer;font-weight:600;padding:6px 0}
   --glass-b:rgba(255,255,255,.65); --shadow:0 1px 2px rgba(0,0,0,.04),0 10px 30px rgba(20,20,50,.07);
   --r:20px;
 }
-@media (prefers-color-scheme:dark){
-  :root{--bg:#0b0b0f;--panel:rgba(44,44,50,.62);--solid:#1c1c1e;--ink:#f5f5f7;--muted:#9a9aa3;--line:rgba(235,235,245,.14);--soft:rgba(235,235,245,.08);--accent:#32d583;--accent-d:#5fe0a0;--accent-bg:rgba(50,215,100,.16);--nic:#4da3ff;--nic-bg:rgba(10,132,255,.2);--van:#ff9f4a;--van-bg:rgba(255,159,10,.2);--ein:rgba(255,214,10,.16);--blue-chip:rgba(10,132,255,.22);--glass-b:rgba(255,255,255,.12);--shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.35)}
-}
+
 html,body{font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI",system-ui,Roboto,sans-serif;-webkit-font-smoothing:antialiased;letter-spacing:-.005em}
 body{background:radial-gradient(900px 520px at 8% -8%,rgba(52,199,150,.20),transparent 62%),radial-gradient(800px 520px at 100% 0%,rgba(10,132,255,.16),transparent 58%),radial-gradient(700px 500px at 60% 110%,rgba(255,149,0,.10),transparent 60%),var(--bg);background-attachment:fixed}
-@media (prefers-color-scheme:dark){body{background:radial-gradient(900px 520px at 8% -8%,rgba(40,200,140,.16),transparent 62%),radial-gradient(800px 520px at 100% 0%,rgba(10,132,255,.18),transparent 58%),var(--bg);background-attachment:fixed}}
+
 h1,h2,h3{letter-spacing:-.02em}
 .glass,.panel,.kpi,.egroup,.settile,.mnav,.seg,.btn.sec{-webkit-backdrop-filter:blur(26px) saturate(170%);backdrop-filter:blur(26px) saturate(170%)}
 .panel,.kpi,.egroup,.settile{background:var(--panel);border:1px solid var(--glass-b);border-radius:var(--r);box-shadow:var(--shadow)}
@@ -411,10 +408,10 @@ svg.chart2 rect{transition:opacity .15s}svg.chart2 rect:hover{opacity:.8}
 /* Dialog: Milchglas */
 #modal{background:rgba(20,20,30,.28);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%)}
 .sheet{background:rgba(255,255,255,.58);-webkit-backdrop-filter:blur(44px) saturate(200%);backdrop-filter:blur(44px) saturate(200%);border:1px solid rgba(255,255,255,.7);border-radius:30px;box-shadow:0 30px 80px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.8);padding:26px 26px 22px}
-@media (prefers-color-scheme:dark){.sheet{background:rgba(40,40,46,.55);border-color:rgba(255,255,255,.14);box-shadow:0 30px 80px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.1)}}
+
 .sheet h3{font-size:22px;font-weight:700;margin-bottom:16px}
 .sheet input,.sheet select{background:rgba(255,255,255,.55);border:1px solid rgba(60,60,67,.12)}
-@media (prefers-color-scheme:dark){.sheet input,.sheet select{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.14)}}
+
 .sheet input:focus,.sheet select:focus{background:var(--solid)}
 .sheet .btn.sec{background:rgba(120,120,128,.14);border:0}
 label.f{font-size:12.5px;margin-bottom:13px}
@@ -463,7 +460,7 @@ svg.chart2 .guide.hot{opacity:.55}
 #tip div i{width:9px;height:9px;border-radius:50%;flex:none}
 #tip div span{flex:1;color:var(--muted)}
 #tip div b{font-variant-numeric:tabular-nums}
-@media (prefers-color-scheme:dark){#tip{background:rgba(40,40,46,.7);border-color:rgba(255,255,255,.14);color:var(--ink)}}
+
 
 /* Interaktion: Kacheln leuchten und heben sich leicht */
 .kpi{transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s,border-color .25s,background-color .25s;cursor:default}
@@ -502,7 +499,7 @@ aside.side button.nv:hover .i{transform:scale(1.14)}
 .chip.end{background:rgba(255,149,0,.18);color:#b25e00}
 .chip.exp{background:rgba(255,59,48,.14);color:#c4281c}
 .pl .chip,.mrow .chip{margin-left:7px;vertical-align:1px}
-@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .chip.end{color:#ffb454}:root:not([data-theme=light]) .chip.exp{color:#ff8a80}}
+
 /* Jahresseite */
 .ytools{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 14px}
 .chipx{border:0;background:var(--accent-bg);color:var(--accent-d);font-weight:600;padding:7px 14px;border-radius:99px;cursor:pointer;font-size:13px}
@@ -552,7 +549,7 @@ svg.chart2 .hit[data-ym],svg.chart2 .hit[data-yr]{cursor:pointer}
 .kpis.four{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media (max-width:700px){.kpis.four{grid-template-columns:1fr 1fr}}
 .chip.adv{background:rgba(175,82,222,.16);color:#8e3fb5}
-@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .chip.adv{color:#d9a3f5}}
+
 .settle.big{font-size:15.5px}
 
 /* Zahlungen abhaken */
@@ -589,19 +586,9 @@ svg.chart2 .hit[data-ym],svg.chart2 .hit[data-yr]{cursor:pointer}
   --glass-b:rgba(255,255,255,.72); --shadow:0 1px 2px rgba(2,16,36,.05),0 12px 32px rgba(5,38,89,.12);
   --k-ein:#7DA0CA; --k-mon:#5483B3; --k-ek:#2b62b3; --k-steuer:#052659;
 }
-@media (prefers-color-scheme:dark){
-  :root{
-    --bg:#021024; --panel:rgba(5,38,89,.46); --solid:#071d45; --ink:#e9f5ff; --muted:#93add0;
-    --line:rgba(193,232,255,.15); --soft:rgba(193,232,255,.08);
-    --accent:#4b78aa; --accent-d:#a5c8f0; --accent-bg:rgba(125,160,202,.22);
-    --nic:#8fb6e6; --nic-bg:rgba(125,160,202,.24); --van:#ffa24d; --van-bg:rgba(255,159,10,.2);
-    --ein:rgba(125,160,202,.24); --blue-chip:rgba(125,160,202,.26);
-    --glass-b:rgba(193,232,255,.14); --shadow:0 1px 2px rgba(0,0,0,.35),0 14px 36px rgba(0,0,0,.4);
-    --k-ein:#7DA0CA; --k-mon:#5483B3; --k-ek:#8fb6e6; --k-steuer:#C1E8FF;
-  }
-}
+
 body{background:radial-gradient(900px 560px at 12% -10%,rgba(125,160,202,.55),transparent 62%),radial-gradient(760px 520px at 100% 4%,rgba(193,232,255,.9),transparent 60%),linear-gradient(180deg,#b7defc 0%,#d9eeff 34%,#eef7ff 100%);background-attachment:fixed}
-@media (prefers-color-scheme:dark){body{background:radial-gradient(900px 560px at 10% -12%,rgba(84,131,179,.38),transparent 62%),radial-gradient(760px 520px at 100% 0%,rgba(5,38,89,.9),transparent 60%),linear-gradient(180deg,#052659 0%,#031a40 32%,#021024 100%);background-attachment:fixed}}
+
 ::selection{background:rgba(125,160,202,.45)}
 /* Kapselform wie im Farbkonzept */
 .nv{border-radius:999px}
@@ -617,7 +604,7 @@ aside.side .nv.on,.nv:hover{border-radius:999px}
 .pbar i{background:linear-gradient(90deg,#5483B3,#7DA0CA 60%,#C1E8FF)}
 .prow.done .cb{background:var(--p2);border-color:var(--p2)}
 .dl.up{color:#1a8a5a}
-@media (prefers-color-scheme:dark){.dl.up{color:#5fd8a0}.dl.dn{color:#ff8a78}.btn:not(.sec):not(.danger){background:linear-gradient(135deg,#5483B3,#0b3f8f)}}
+
 .chip.ek{background:var(--accent-bg);color:var(--accent-d)}
 .selcol{fill:rgba(125,160,202,.22)}
 .btn:not(.sec):not(.danger){box-shadow:0 4px 12px rgba(5,38,89,.28)}
