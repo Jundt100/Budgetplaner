@@ -623,10 +623,6 @@ aside.side button.nv .ls{display:none}
 .wtabs button{border:0;background:none;padding:10px 14px;font-weight:600;font-size:15px;color:var(--muted);border-bottom:2.5px solid transparent;margin-bottom:-1px;transition:color .2s,border-color .2s}
 .wtabs button:hover{color:var(--ink)}
 .wtabs button.on{color:var(--ink);border-bottom-color:var(--p2,var(--accent))}
-.wadd{display:flex;align-items:center;gap:18px;width:100%;text-align:left;color:var(--ink);cursor:pointer;padding:16px 20px}
-.wadd .wplus{width:62px;height:62px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:30px;font-weight:300;color:#fff;background:linear-gradient(135deg,#5483B3,#052659);box-shadow:0 6px 16px rgba(5,38,89,.3);transition:transform .2s}
-.wadd:hover .wplus{transform:scale(1.06)}
-.wadd b{display:block;font-size:17px}.wadd small{color:var(--muted);font-size:13px}
 .wfbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
 .wfbar select{width:auto;min-width:170px}
 .wsumline{font-size:13.5px;color:var(--muted);margin:0 0 12px 2px}
@@ -697,7 +693,6 @@ textarea.wnote{display:block;margin-top:4px;min-height:70px;font-family:inherit;
   .wbrow{flex-wrap:wrap;gap:10px}
   .wbrow .wmain{flex:1 1 calc(100% - 80px)}
   .wbrow .wprice{margin-left:74px}.wbrow .wbtns{margin-left:auto}
-  .wadd .wplus{width:50px;height:50px;font-size:26px}
 }
 </style>
 </head>
@@ -1118,7 +1113,7 @@ function viewEntries(){
 
 /* ============ Admin / Verwaltung ============ */
 /* ============ Einstellungen ============ */
-const APP_VERSION='2026.11.14-4';
+const APP_VERSION='2026.11.14-5';
 const autoUpd = () => lsGet('budget_autoupd','1')!=='0';
 function installPanel(){
   const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
@@ -1935,8 +1930,8 @@ function viewBought(all){
   const cy=String(new Date().getFullYear());
   const yr=ui.wyEff=(ui.wyear==='all'||years.includes(ui.wyear))?ui.wyear:(years.includes(cy)?cy:(years[0]||'all')), sel=bought.filter(w=>yr==='all'||(w.kaufAm||'').startsWith(yr));
   let h=`<div class="wfbar">${years.length?`<div class="seg">${['all',...years].map(y=>`<button class="${yr===y?'on':''}" data-wyear="${y}">${y==='all'?'Alle Jahre':y}</button>`).join('')}</div>`:''}
-    <button class="btn sm" data-wact="buyadd" style="margin-left:auto">＋ Kauf erfassen</button>${sel.length?'<button class="btn sec sm" data-wact="csv">Excel (CSV)</button>':''}</div>`;
-  if(!sel.length) return h+`<div class="panel"><div class="empty">Noch keine Käufe${yr!=='all'?' in '+yr:''}. Bei einem Wunsch auf «Gekauft» tippen oder oben «Kauf erfassen».</div></div>`;
+    ${sel.length?'<button class="btn sec sm" data-wact="csv" style="margin-left:auto">Excel (CSV)</button>':''}</div>`;
+  if(!sel.length) return h+`<div class="panel"><div class="empty">Noch keine Käufe${yr!=='all'?' in '+yr:''}. Bei einem Wunsch auf «Gekauft» tippen oder unten rechts mit dem ＋ einen Kauf erfassen.</div></div>`;
   const tot=sumBy(sel,kaufAmt), wish=sumBy(sel,w=>+w.preis||0), top=sel.reduce((a,w)=>kaufAmt(w)>kaufAmt(a)?w:a,sel[0]), diff=wish-tot;
   h+=`<div class="kpis three">
     <div class="kpi ek"><div class="kl">Käufe</div><div class="kv2">${sel.length}</div><div class="ks">${yr==='all'?'insgesamt':'im Jahr '+yr}</div></div>
@@ -2002,12 +1997,11 @@ function viewWish(){
   const groups={}; open.forEach(w=>{ const g=w.kat||'Sonstiges'; (groups[g]=groups[g]||[]).push(w); });
   const order=[...wcats()]; Object.keys(groups).forEach(g=>{ if(!order.includes(g)) order.push(g); });
   const names=order.filter(g=>groups[g]), allClosed=names.length&&names.every(g=>ui.wclosed[g]);
-  h+=`<button class="panel wadd" data-wact="add"><span class="wplus">＋</span><span><b>Wunsch notieren</b><small>Kategorie, Priorität, Preis, Link, Bild und Notiz</small></span></button>
-   <div class="wfbar"><select data-wprio><option value="">Alle Prioritäten</option>${WPRIO.map(([v,l])=>`<option value="${v}" ${ui.wprio===v?'selected':''}>Priorität ${l}</option>`).join('')}</select>
+  h+=`<div class="wfbar"><select data-wprio><option value="">Alle Prioritäten</option>${WPRIO.map(([v,l])=>`<option value="${v}" ${ui.wprio===v?'selected':''}>Priorität ${l}</option>`).join('')}</select>
     <div class="seg">${[['all','Alle'],['goal','Ziel erreicht']].map(([v,l])=>`<button class="${ui.wfilt===v?'on':''}" data-wfilt="${v}">${l}</button>`).join('')}</div>
     ${names.length?`<button class="btn sec sm" data-wact="fold" style="margin-left:auto">${allClosed?'Alle ausklappen':'Alle einklappen'}</button>`:''}</div>
    <div class="wsumline">${open.length} ${open.length===1?'Wunsch':'Wünsche'} offen · zusammen ${chf(sumBy(open,w=>+w.preis||0))}${sumBy(open,w=>+w.gespart||0)>0?' · gespart '+chf(sumBy(open,w=>+w.gespart||0)):''}</div>`;
-  if(!names.length) h+=`<div class="panel"><div class="empty">${S.wishes.length?'Keine Wünsche in diesem Filter.':'Noch keine Wünsche. Tippe auf «Wunsch notieren».'}</div></div>`;
+  if(!names.length) h+=`<div class="panel"><div class="empty">${S.wishes.length?'Keine Wünsche in diesem Filter.':'Noch keine Wünsche. Tippe unten rechts auf das ＋.'}</div></div>`;
   names.forEach(g=>{
     const arr=groups[g].sort((a,b)=>(WPRANK[a.prio]??1)-(WPRANK[b.prio]??1)||(+b.preis||0)-(+a.preis||0)), cl=!!ui.wclosed[g];
     h+=`<div class="panel wgroup ${cl?'closed':''}"><button class="wg-h" data-wgrp="${esc(g)}" aria-expanded="${!cl}"><b>${esc(g)}</b><span class="wcnt">${arr.length}</span><span class="wsum">${chf(sumBy(arr,w=>+w.preis||0))}</span><span class="wchev"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span></button>
