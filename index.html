@@ -690,6 +690,16 @@ textarea.wnote{display:block;margin-top:4px;min-height:70px;font-family:inherit;
   aside.side button.nv .l{display:none!important}
   aside.side{padding-left:2px;padding-right:2px}
   aside.side button.nv .ls{display:block;font-size:9.5px;letter-spacing:-.01em;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* Handy: nichts darf breiter als der Bildschirm werden (sonst rechts ein leerer Streifen) */
+  .kpis,.kpis.four{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kpis.three{grid-template-columns:minmax(0,1fr)}
+  .dgrid,.two,.ygrid{grid-template-columns:minmax(0,1fr)}
+  .kpi{min-width:0;padding:14px}
+  .kpi .kv2,.kpi.spar .kv2{font-size:clamp(17px,5.2vw,22px)}
+  .kpi .ks{white-space:normal}
+  table.ledger{font-size:13.5px}
+  table.ledger th,table.ledger td{padding:8px 5px}
+  table.ledger tr.spar td{font-size:14px}
   .wbrow{flex-wrap:wrap;gap:10px}
   .wbrow .wmain{flex:1 1 calc(100% - 80px)}
   .wbrow .wprice{margin-left:74px}.wbrow .wbtns{margin-left:auto}
@@ -1113,7 +1123,7 @@ function viewEntries(){
 
 /* ============ Admin / Verwaltung ============ */
 /* ============ Einstellungen ============ */
-const APP_VERSION='2026.11.14-5';
+const APP_VERSION='2026.11.15-1';
 const autoUpd = () => lsGet('budget_autoupd','1')!=='0';
 function installPanel(){
   const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
