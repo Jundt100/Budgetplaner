@@ -1,0 +1,17 @@
+{
+  "name": "Haushaltsbudget",
+  "short_name": "Budget",
+  "description": "Haushaltsbudget Nicola & Vanessa",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#021024",
+  "theme_color": "#052659",
+  "lang": "de-CH",
+  "icons": [
+    {"src": "icon-192.png?v=3", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png?v=3", "sizes": "512x512", "type": "image/png"},
+    {"src": "icon-maskable-512.png?v=3", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
